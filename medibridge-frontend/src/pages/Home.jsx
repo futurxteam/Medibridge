@@ -2,13 +2,11 @@
 import React from "react";
 import "./styles/Home.css";
 import { useNavigate } from "react-router-dom";
-
+import Footer from "./Footer";
 
 const Home = () => {
-  const navigate = useNavigate();   
-const handleLogin = () => navigate("/login");
-
-
+  const navigate = useNavigate();
+  const handleLogin = () => navigate("/login");
 
   return (
     <div className="page">
@@ -55,7 +53,7 @@ const handleLogin = () => navigate("/login");
               Student login
             </button>
             <button className="hero-secondary" onClick={handleLogin}>
-              Recruiter / admin
+              External Candidates Login
             </button>
           </div>
 
@@ -208,8 +206,7 @@ const handleLogin = () => navigate("/login");
         <div>
           <h2>Ready to launch your student job portal?</h2>
           <p>
-            Integrate Medibridge with your campus and give students a modern,
-            Stripe-style recruitment experience.
+            Integrate Medibridge with your campus and give students a modern recruitment experience.
           </p>
         </div>
         <div className="cta-buttons">
@@ -222,11 +219,8 @@ const handleLogin = () => navigate("/login");
         </div>
       </section>
 
-      <footer className="footer">
-        <span>© {new Date().getFullYear()} Medibridge.</span>
-        <span className="dot">•</span>
-        <span>Student-first job recruitment platform.</span>
-      </footer>
+      {/* FOOTER COMPONENT */}
+      <Footer />
     </div>
   );
 };
