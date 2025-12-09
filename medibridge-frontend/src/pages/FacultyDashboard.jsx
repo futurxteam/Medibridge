@@ -1,6 +1,6 @@
 // src/pages/FacultyDashboard.jsx
 import React, { useEffect, useState } from "react";
-import "./styles/Home.css";
+import "./styles/Dashboard.css";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../api/client";
 import { useNavigate } from "react-router-dom";
@@ -42,7 +42,12 @@ const FacultyDashboard = () => {
     <div className="page">
       <header className="nav">
         <div className="nav-left" onClick={() => navigate("/")}>
-        <img src="/Medibridge.png" alt="Medibridge Logo" />
+        <img
+          src="/Medibridge.png"
+          alt="Medibridge Logo"
+          className="nav-logo"
+        />
+
         </div>
 
         <nav className="nav-links">

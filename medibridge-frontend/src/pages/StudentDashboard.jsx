@@ -1,6 +1,6 @@
 // src/pages/StudentDashboard.jsx
 import React, { useEffect, useState } from "react";
-import "./styles/Home.css"; // reuse same dark theme + buttons
+import "./styles/Dashboard.css";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../api/client";
 import { useNavigate } from "react-router-dom";
@@ -45,7 +45,12 @@ const StudentDashboard = () => {
       {/* Same header style */}
       <header className="nav">
         <div className="nav-left" onClick={() => navigate("/")}>
-        <img src="/Medibridge.png" alt="Medibridge Logo" />
+        <img
+          src="/Medibridge.png"
+          alt="Medibridge Logo"
+          className="nav-logo"
+        />
+
         </div>
 
         <nav className="nav-links">

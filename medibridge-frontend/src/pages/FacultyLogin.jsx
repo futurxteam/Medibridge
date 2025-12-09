@@ -2,11 +2,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./styles/Login.css";
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE = "http://localhost:5000";
 
 const FacultyLogin = () => {
   const navigate = useNavigate();
+  const { login } = useAuth(); // 👈 from AuthContext
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,10 +39,10 @@ const FacultyLogin = () => {
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // ✅ Update global auth state + localStorage
+      login(data.user, data.token);
 
-      // later: navigate("/faculty/dashboard")
+      // ✅ Go directly to faculty dashboard
       navigate("/faculty/dashboard");
     } catch (err) {
       console.error(err);
