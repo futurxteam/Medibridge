@@ -1,27 +1,18 @@
-// src/pages/login.jsx
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./styles/Login.css";
 import { useAuth } from "../context/AuthContext";
-
-const API_BASE = "http://localhost:5000";
+import { login } from "../api/api";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth(); // from AuthContext
+  const { login: setAuth } = useAuth();
 
-  const [roleUi, setRoleUi] = useState("student"); // "student" | "external"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Map UI role to backend role
-  const mapRoleToBackend = (uiRole) => {
-    if (uiRole === "student") return "STUDENT";
-    if (uiRole === "external") return "EXTERNAL";
-    return "STUDENT";
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,79 +20,51 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const backendRole = mapRoleToBackend(roleUi);
-
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          role: backendRole,
-        }),
+      const result = await login({
+        email,
+        password,
+        role: "STUDENT", // Hardcoded — this page is ONLY for Medibridge students
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setErrorMsg(data.message || "Login failed");
+      if (!result.success) {
+        setErrorMsg(result.error || "Invalid email or password");
         setLoading(false);
         return;
       }
 
-      // ✅ Use AuthContext to store token + user
-      // AuthContext will also save them to localStorage as:
-      // "medibridge_token" and "medibridge_user"
-      login(data.user, data.token);
+      // Save auth state
+      setAuth(result.data.user, result.data.token);
 
-      // ✅ Redirect based on role from backend
-      const role = data.user?.role;
+      // Always go to student jobs page
+      navigate("/student/jobs", { replace: true });
+   } catch (err) {
+    setErrorMsg("Network error. Please try again later.");
+    console.error(err);
 
-      if (role === "STUDENT") {
-        navigate("/student/jobs");
-      } else if (role === "EXTERNAL") {
-        navigate("/external/jobs");
-      } else if (role === "FACULTY") {
-        navigate("/faculty/dashboard");
-      } else {
-        navigate("/");
-      }
-    } catch (err) {
-      console.error(err);
-      setErrorMsg("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <h2 className="auth-title">Login to Medibridge</h2>
-        <p className="auth-sub">Choose how you want to log in.</p>
+        <h2 className="auth-title">Student Login</h2>
+        <p className="auth-sub">
+          Welcome back, Medibridge / FutureAce student
+        </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="auth-group">
-            <label className="auth-label">I am a:</label>
-            <select
-              className="auth-input"
-              value={roleUi}
-              onChange={(e) => setRoleUi(e.target.value)}
-            >
-              <option value="student">FutureAce / Medibridge Student</option>
-              <option value="external">External Candidate</option>
-            </select>
-          </div>
-
           <div className="auth-group">
             <label className="auth-label">Email</label>
             <input
               className="auth-input"
               type="email"
-              placeholder="you@example.com"
+              placeholder="you@medibridge.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoFocus
             />
           </div>
 
@@ -110,7 +73,7 @@ const Login = () => {
             <input
               className="auth-input"
               type="password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -119,16 +82,24 @@ const Login = () => {
 
           {errorMsg && <p className="auth-error">{errorMsg}</p>}
 
-          <button className="auth-btn" type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          <button
+            className="auth-btn"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
 
         <p className="auth-footer">
-          Don’t have an account?{" "}
+          New here?{" "}
           <span className="auth-link" onClick={() => navigate("/signup")}>
-            Sign up
+            Create an account
           </span>
+        </p>
+
+        <p className="auth-footer" style={{ marginTop: "1.8rem", fontSize: "0.85rem", color: "#666" }}>
+          Faculty & staff use the separate admin portal.
         </p>
       </div>
     </div>

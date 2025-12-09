@@ -1,34 +1,29 @@
 // middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 
-// Verify JWT and attach user payload
 export const auth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.header("Authorization");
 
-  const token =
-    authHeader && authHeader.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : null;
-
-  if (!token) {
-    return res.status(401).json({ message: "No token provided." });
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token, authorization denied" });
   }
+
+  const token = authHeader.substring(7).trim(); // THIS LINE FIXES EVERYTHING
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // decoded: { id, role, isMedibridgeStudent, iat, exp }
-    req.user = decoded;
+    req.user = { id: decoded.id, role: decoded.role };
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token." });
+    console.error("Token error:", err.message);
+    return res.status(401).json({ message: "Token is not valid" });
   }
 };
 
-// Restrict route to specific roles
 export const requireRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Forbidden" });
+      return res.status(403).json({ message: "Access denied: insufficient role" });
     }
     next();
   };

@@ -3,12 +3,11 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./styles/Login.css";
 import { useAuth } from "../context/AuthContext";
-
-const API_BASE = "http://localhost:5000";
+import { login } from "../api/api"; // using your clean api.jsx
 
 const FacultyLogin = () => {
   const navigate = useNavigate();
-  const { login } = useAuth(); // 👈 from AuthContext
+  const { login: setAuth } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,32 +20,26 @@ const FacultyLogin = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          role: "FACULTY",
-        }),
+      const result = await login({
+        email,
+        password,
+        role: "FACULTY", // forced — this page only allows faculty
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setErrorMsg(data.message || "Login failed");
+      if (!result.success) {
+        setErrorMsg(result.error || "Invalid credentials");
         setLoading(false);
         return;
       }
 
-      // ✅ Update global auth state + localStorage
-      login(data.user, data.token);
+      // Save auth state
+      setAuth(result.data.user, result.data.token);
 
-      // ✅ Go directly to faculty dashboard
-      navigate("/faculty/dashboard");
+      // Redirect to faculty dashboard
+      navigate("/faculty/dashboard", { replace: true });
     } catch (err) {
-      console.error(err);
-      setErrorMsg("Something went wrong. Please try again.");
+      console.error("Faculty login error:", err);
+      setErrorMsg("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -54,9 +47,18 @@ const FacultyLogin = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
+      <div className="auth-card" style={{ maxWidth: "420px" }}>
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">Faculty Portal</h1>
+          <p className="text-sm text-gray-600 mt-2">
+            Medibridge / FutureAce Staff Only
+          </p>
+        </div>
+
         <h2 className="auth-title">Faculty Login</h2>
-        <p className="auth-sub">Only for verified Medibridge / FutureAce faculty.</p>
+        <p className="auth-sub">
+          Restricted access • Faculty accounts are created by admin only
+        </p>
 
         <form onSubmit={handleSubmit}>
           <div className="auth-group">
@@ -64,10 +66,11 @@ const FacultyLogin = () => {
             <input
               className="auth-input"
               type="email"
-              placeholder="faculty@example.com"
+              placeholder="faculty@medibridge.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoFocus
             />
           </div>
 
@@ -76,7 +79,7 @@ const FacultyLogin = () => {
             <input
               className="auth-input"
               type="password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -85,17 +88,25 @@ const FacultyLogin = () => {
 
           {errorMsg && <p className="auth-error">{errorMsg}</p>}
 
-          <button className="auth-btn" type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          <button
+            className="auth-btn"
+            type="submit"
+            disabled={loading}
+            style={{ backgroundColor: "#1e40af" }} // slightly darker blue for authority
+          >
+            {loading ? "Authenticating..." : "Login as Faculty"}
           </button>
         </form>
 
-        <p className="auth-footer">
-          Need an account?{" "}
-          <span className="auth-link" onClick={() => navigate("/signup")}>
-            Sign up
-          </span>
-        </p>
+        {/* No signup link — accounts are admin-created only */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-500">
+            Faculty accounts are created by the Medibridge administration.<br />
+            Contact <strong>admin@medibridge.com</strong> if you need access.
+          </p>
+        </div>
+
+       =
       </div>
     </div>
   );

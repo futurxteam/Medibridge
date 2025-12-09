@@ -22,7 +22,9 @@ const Home = () => {
     // Otherwise go to login page
     navigate("/login");
   };
-
+ const handlesignup = () => {
+    navigate("/signup");
+  };
   const handleLogout = () => {
     logout();
     navigate("/", { replace: true });
@@ -72,7 +74,7 @@ const Home = () => {
               <button className="nav-link-btn" onClick={handleLogin}>
                 Login
               </button>
-              <button className="nav-cta" onClick={handleLogin}>
+              <button className="nav-cta" onClick={handlesignup}>
                 Get started
               </button>
             </>

@@ -7,8 +7,6 @@ const router = Router();
 
 router.post("/register", register);
 router.post("/login", login);
-
-// protected: profile, requires valid token
 router.get("/profile", auth, getProfile);
 
 export default router;
