@@ -593,3 +593,19 @@
   border: 1px solid rgba(180, 200, 255, 0.40) !important;
   backdrop-filter: blur(18px) !important;
 }
+.nav-dashboard-btn {
+  border-radius: 999px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1); /* blue → indigo */
+  color: #fff;
+  padding: 7px 16px;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.25s ease;
+}
+
+.nav-dashboard-btn:hover {
+  opacity: 0.9;
+}

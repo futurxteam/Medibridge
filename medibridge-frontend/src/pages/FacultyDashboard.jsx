@@ -57,10 +57,15 @@ useEffect(() => {
 }, [activeTab]);
 
 const loadRecords = async () => {
-  const res = await getAcademyRecords();
-setRecords(Array.isArray(res.data) ? res.data : []);
+  const res = await getAllRecords();
 
+  if (res.success) {
+    setRecords(Array.isArray(res.data) ? res.data : []);
+  } else {
+    setRecords([]);
+  }
 };
+
 
 
   // Load all jobs

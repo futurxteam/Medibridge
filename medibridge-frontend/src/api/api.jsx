@@ -101,8 +101,14 @@ export const applyToJob = async (jobId) => {
     method: "POST",
     headers: getAuthHeaders(),
   });
-  const data = res.ok ? await handleResponse(res) : null;
-  return { success: res.ok, data, error: res.ok ? null : (await res.json()).message };
+
+  const json = await res.json(); // parse ONCE
+
+  return {
+    success: res.ok,
+    data: res.ok ? json : null,
+    error: res.ok ? null : json.message || "Something went wrong",
+  };
 };
 
 // FACULTY
@@ -218,15 +224,23 @@ export const verifyOtp = async (email, code) => {
 /* -----------------------------
    ACADEMIC RECORD CRUD (FACULTY)
 ------------------------------ */
-export const getAcademyRecords = async () => {
+export const getAllRecords = async () => {
   const res = await fetch(`${API_BASE}/api/faculty/getrecord`, {
     headers: getAuthHeaders(),
   });
   const data = await res.json();
   return { success: res.ok, data };
 };
+export const getRecordById = async (id) => {
+  const res = await fetch(`${API_BASE}/api/faculty/getrecord/${id}`, {
+    headers: getAuthHeaders(),
+  });
 
-export const createAcademyRecord = async (record) => {
+  const data = await res.json();
+  return { success: res.ok, data };
+};
+
+export const createRecord = async (record) => {
   const res = await fetch(`${API_BASE}/api/faculty/addrecord`, {
     method: "POST",
     headers: getAuthHeaders(),
@@ -236,7 +250,7 @@ export const createAcademyRecord = async (record) => {
   return { success: res.ok, data };
 };
 
-export const updateAcademyRecord = async (id, updates) => {
+export const updateRecord = async (id, updates) => {
   const res = await fetch(`${API_BASE}/api/faculty/updaterecord/${id}`, {
     method: "PUT",
     headers: getAuthHeaders(),
@@ -246,7 +260,7 @@ export const updateAcademyRecord = async (id, updates) => {
   return { success: res.ok, data };
 };
 
-export const deleteAcademyRecord = async (id) => {
+export const deleteRecord = async (id) => {
   const res = await fetch(`${API_BASE}/api/faculty/delete/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),

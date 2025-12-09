@@ -584,6 +584,47 @@ body {
 .view-btn:hover {
   background: rgba(37, 99, 235, 0.16);
 }
+.nav-dashboard-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;                 /* spacing between icon & text */
+  padding: 10px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #f0f0f0;            /* default text color */
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+/* Icon inside the link */
+.nav-dashboard-link svg {
+  width: 20px;
+  height: 20px;
+  stroke: #cfcfcf;
+  transition: 0.25s ease;
+}
+
+/* Hover effect */
+.nav-dashboard-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.nav-dashboard-link:hover svg {
+  stroke: #ffffff;
+}
+
+/* Active link */
+.nav-dashboard-link.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.nav-dashboard-link.active svg {
+  stroke: #ffffff;
+}
 
 /* Accordion (applicants inside job card) */
 .accordion {

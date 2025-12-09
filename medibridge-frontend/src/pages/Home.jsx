@@ -86,22 +86,20 @@ const Home = () => {
                 <span>
                   Hello,{" "}
                   <span className="nav-user-name">{user.name}</span>{" "}
-                  <span className="nav-user-role">({user.role})</span>
                 </span>
                 <button
-                  type="button"
-                  className="nav-dashboard-link"
-                  onClick={() => {
-                    if (user.role === "STUDENT") navigate("/student/jobs");
-                    else if (user.role === "EXTERNAL")
-                      navigate("/student/jobs");
-                    else if (user.role === "FACULTY")
-                      navigate("/faculty/dashboard");
-                    else navigate("/");
-                  }}
-                >
-                  Go to dashboard
-                </button>
+  type="button"
+  className="nav-dashboard-btn"
+  onClick={() => {
+    if (user.role === "STUDENT") navigate("/student/jobs");
+    else if (user.role === "EXTERNAL") navigate("/student/jobs");
+    else if (user.role === "FACULTY") navigate("/faculty/dashboard");
+    else navigate("/");
+  }}
+>
+  Go to Dashboard
+</button>
+
               </div>
 
               <button className="nav-logout-btn" onClick={handleLogout}>

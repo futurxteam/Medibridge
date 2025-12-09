@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from "react";
 import "./styles/Dashboard.css";
 import { useAuth } from "../context/AuthContext";
-import { getJobs, getStudentProfile, updateStudentProfile } from "../api/api";import SidebarLayout from "../components/sideBar";
+import { getJobs, getStudentProfile, updateStudentProfile, applyToJob } from "../api/api";
+import SidebarLayout from "../components/sideBar";
 
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
@@ -40,20 +41,36 @@ const StudentDashboard = () => {
     load();
   }, []);
 
-  const handleApply = (job) => {
-    if (!isProfileComplete) {
-      setMessage({
-        text: "Complete your profile before applying to jobs.",
-        type: "error",
-      });
-      return;
-    }
+const handleApply = async (job) => {
+  if (!isProfileComplete) {
+    setMessage({
+      text: "Complete your profile before applying to jobs.",
+      type: "error",
+    });
+    return;
+  }
 
-    const email = "hr@company.com";
+  setApplyingTo(job._id);
 
-    const subject = `Application for ${job.title}`;
+  // 1️⃣ Record application in backend
+  const res = await applyToJob(job._id);
 
-    const body = `
+  if (!res.success) {
+    setApplyingTo(null);
+    setMessage({ text: res.error, type: "error" });
+    return;
+  }
+
+  // 2️⃣ Update UI (mark as applied)
+  setAppliedJobs((prev) => new Set(prev).add(job._id));
+
+  setMessage({ text: "Application submitted!", type: "success" });
+
+  // 3️⃣ Open Gmail draft (same as before)
+  const email = "hr@company.com";
+  const subject = `Application for ${job.title}`;
+
+  const body = `
 Hello,
 
 I would like to apply for the role: ${job.title}.
@@ -76,12 +93,15 @@ Regards,
 ${user.name}
 `;
 
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-      email
-    )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+    email
+  )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-    window.open(gmailUrl, "_blank");
-  };
+  window.open(gmailUrl, "_blank");
+
+  setApplyingTo(null);
+};
+
 
   const JobsComponent = () => (
     <div className="page">

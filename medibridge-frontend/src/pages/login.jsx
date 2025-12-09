@@ -15,36 +15,42 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setLoading(true);
+  e.preventDefault();
+  setErrorMsg("");
+  setLoading(true);
 
-    try {
-      const result = await login({
-        email,
-        password,
-        role: "STUDENT", // Hardcoded — this page is ONLY for Medibridge students
-      });
+  try {
+    const result = await login({
+      email,
+      password,
+      role: "STUDENT",
+    });
 
-      if (!result.success) {
-        setErrorMsg(result.error || "Invalid email or password");
-        setLoading(false);
-        return;
-      }
+    if (!result.success) {
+      setErrorMsg(result.error || "Invalid email or password");
+      setLoading(false);
+      return;
+    }
 
-      // Save auth state
-      setAuth(result.data.user, result.data.token);
+    // ❌ Block faculty accidentally logging in here
+    if (result.data.user.role === "FACULTY") {
+      setErrorMsg("Faculty must use the Faculty Login page.");
+      setLoading(false);
+      return;
+    }
 
-      // Always go to student jobs page
-      navigate("/student/jobs", { replace: true });
-   } catch (err) {
+    // ✔ Allow student/external login
+    setAuth(result.data.user, result.data.token);
+    navigate("/student/jobs", { replace: true });
+
+  } catch (err) {
     setErrorMsg("Network error. Please try again later.");
     console.error(err);
-
   } finally {
     setLoading(false);
   }
 };
+
 
   return (
     <div className="auth-page">
