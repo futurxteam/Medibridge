@@ -1,6 +1,6 @@
-// models/Job.js
+// models/Job.js (ESM)
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const jobSchema = new mongoose.Schema(
   {
@@ -26,4 +26,5 @@ const jobSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Job", jobSchema);
+const Job = mongoose.model("Job", jobSchema);
+export default Job;

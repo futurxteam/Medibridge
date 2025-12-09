@@ -1,7 +1,8 @@
+// src/api/client.js
 const API_BASE = "http://localhost:5000";
 
 export async function apiRequest(path, options = {}) {
-  const token = localStorage.getItem("medibridge_token");
+  const token = localStorage.getItem("token");
 
   const headers = {
     "Content-Type": "application/json",
@@ -17,10 +18,16 @@ export async function apiRequest(path, options = {}) {
     headers,
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Request failed");
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (e) {
+    // ignore parse errors for empty responses
   }
 
-  return res.json();
+  if (!res.ok) {
+    throw new Error(data.message || "Request failed");
+  }
+
+  return data;
 }

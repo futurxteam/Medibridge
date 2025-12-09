@@ -2,11 +2,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./styles/Login.css";
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE = "http://localhost:5000";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth(); // from AuthContext
 
   const [roleUi, setRoleUi] = useState("student"); // "student" | "external"
   const [email, setEmail] = useState("");
@@ -47,12 +49,23 @@ const Login = () => {
         return;
       }
 
-      // Save auth data
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // ✅ Use AuthContext to store token + user
+      // AuthContext will also save them to localStorage as:
+      // "medibridge_token" and "medibridge_user"
+      login(data.user, data.token);
 
-      // For now, send everyone to home. Later we can route based on role.
-      navigate("/");
+      // ✅ Redirect based on role from backend
+      const role = data.user?.role;
+
+      if (role === "STUDENT") {
+        navigate("/student/jobs");
+      } else if (role === "EXTERNAL") {
+        navigate("/external/jobs");
+      } else if (role === "FACULTY") {
+        navigate("/faculty/dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg("Something went wrong. Please try again.");

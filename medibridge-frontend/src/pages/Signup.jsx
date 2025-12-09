@@ -1,7 +1,7 @@
 // src/pages/Signup.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./styles/Signup.css"; // or "./styles/Login.css" if you're reusing
+import "./styles/Login.css"; // or "./styles/Login.css" if you're reusing
 
 const API_BASE = "http://localhost:5000";
 

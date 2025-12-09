@@ -1,10 +1,9 @@
 // controllers/authController.js
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-
-// helper: generate JWT
+// helper: generate JWT (API token)
 const createToken = (user) => {
   return jwt.sign(
     {
@@ -18,7 +17,7 @@ const createToken = (user) => {
 };
 
 // POST /api/auth/register
-exports.register = async (req, res) => {
+export const register = async (req, res) => {
   try {
     const { name, email, password, role, isMedibridgeStudent } = req.body;
 
@@ -61,7 +60,7 @@ exports.register = async (req, res) => {
 };
 
 // POST /api/auth/login
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
@@ -100,6 +99,21 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// GET /api/auth/profile  (protected)
+export const getProfile = async (req, res) => {
+  try {
+    // req.user is set by auth middleware (decoded JWT)
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error("Profile error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

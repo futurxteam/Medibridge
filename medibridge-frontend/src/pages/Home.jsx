@@ -1,32 +1,112 @@
 // src/pages/Home.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import "./styles/Home.css";
 import { useNavigate } from "react-router-dom";
 import Footer from "./Footer";
 
+import { useAuth } from "../context/AuthContext";
+import { apiRequest } from "../api/client";
+
 const Home = () => {
   const navigate = useNavigate();
-  const handleLogin = () => navigate("/login");
+  const { user, token, login, logout } = useAuth();
+
+  const handleLogin = () => {
+    // If already logged in, send them to the right place
+    if (user) {
+      if (user.role === "STUDENT") return navigate("/student/jobs");
+      if (user.role === "EXTERNAL") return navigate("/external/jobs");
+      if (user.role === "FACULTY") return navigate("/faculty/dashboard");
+      return navigate("/");
+    }
+    // Otherwise go to login page
+    navigate("/login");
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/", { replace: true });
+  };
+
+  // On first load / refresh: if we have a token but no user in context,
+  // fetch profile from backend to restore the session.
+  useEffect(() => {
+    if (token && !user) {
+      apiRequest("/api/auth/profile")
+        .then((profile) => {
+          login(
+            {
+              id: profile._id,
+              name: profile.name,
+              email: profile.email,
+              role: profile.role,
+              isMedibridgeStudent: profile.isMedibridgeStudent,
+            },
+            token
+          );
+        })
+        .catch(() => {
+          // Token invalid/expired → clear it
+          logout();
+        });
+    }
+  }, [token, user, login, logout]);
 
   return (
     <div className="page">
       {/* NAVBAR */}
       <header className="nav">
-        <div className="nav-left">
-          <div className="nav-logo">Medibridge</div>
-          <nav className="nav-links">
-            <a href="#students">For students</a>
-            <a href="#recruiters">For recruiters</a>
-            <a href="#how-it-works">How it works</a>
-          </nav>
+        <div className="nav-left" onClick={() => navigate("/")}>
+          <img src="/Medibridge.png" alt="Medibridge logo" className="nav-logo" />
         </div>
+
+        <nav className="nav-links">
+          <a href="#students">For students</a>
+          <a href="#recruiters">For recruiters</a>
+          <a href="#how-it-works">How it works</a>
+        </nav>
+
         <div className="nav-right">
-          <button className="nav-link-btn" onClick={handleLogin}>
-            Login
-          </button>
-          <button className="nav-cta" onClick={handleLogin}>
-            Get started
-          </button>
+          {!user && (
+            <>
+              <button className="nav-link-btn" onClick={handleLogin}>
+                Login
+              </button>
+              <button className="nav-cta" onClick={handleLogin}>
+                Get started
+              </button>
+            </>
+          )}
+
+          {user && (
+            <div className="nav-user-chip">
+              <div className="nav-user-text">
+                <span>
+                  Hello,{" "}
+                  <span className="nav-user-name">{user.name}</span>{" "}
+                  <span className="nav-user-role">({user.role})</span>
+                </span>
+                <button
+                  type="button"
+                  className="nav-dashboard-link"
+                  onClick={() => {
+                    if (user.role === "STUDENT") navigate("/student/jobs");
+                    else if (user.role === "EXTERNAL")
+                      navigate("/external/jobs");
+                    else if (user.role === "FACULTY")
+                      navigate("/faculty/dashboard");
+                    else navigate("/");
+                  }}
+                >
+                  Go to dashboard
+                </button>
+              </div>
+
+              <button className="nav-logout-btn" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -206,7 +286,8 @@ const Home = () => {
         <div>
           <h2>Ready to launch your student job portal?</h2>
           <p>
-            Integrate Medibridge with your campus and give students a modern recruitment experience.
+            Integrate Medibridge with your campus and give students a modern
+            recruitment experience.
           </p>
         </div>
         <div className="cta-buttons">

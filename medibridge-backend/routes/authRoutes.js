@@ -1,14 +1,14 @@
 // routes/authRoutes.js
+import { Router } from "express";
+import { register, login, getProfile } from "../controllers/authController.js";
+import { auth } from "../middleware/authMiddleware.js";
 
-const express = require("express");
-const { register, login } = require("../controllers/authController");
+const router = Router();
 
-const router = express.Router();
-
-// Register a new user (student / external / faculty)
 router.post("/register", register);
-
-// Login user
 router.post("/login", login);
 
-module.exports = router;
+// protected: profile, requires valid token
+router.get("/profile", auth, getProfile);
+
+export default router;

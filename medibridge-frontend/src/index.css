@@ -1,9 +1,18 @@
+/* index.css — Bright Light Theme */
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-body {
-  background: #050816;
+html, body {
+  height: 100%;
+  width: 100%;
+  scroll-behavior: smooth;
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at 20% 0%, #e9f2ff, #ffffff 65%);
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

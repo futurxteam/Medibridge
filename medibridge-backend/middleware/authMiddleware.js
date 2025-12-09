@@ -1,9 +1,8 @@
 // middleware/authMiddleware.js
-
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
 // Verify JWT and attach user payload
-exports.auth = (req, res, next) => {
+export const auth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   const token =
@@ -26,7 +25,7 @@ exports.auth = (req, res, next) => {
 };
 
 // Restrict route to specific roles
-exports.requireRole = (...roles) => {
+export const requireRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({ message: "Forbidden" });

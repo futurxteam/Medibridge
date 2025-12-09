@@ -1,15 +1,15 @@
-// server.js
+// server.js (ESM version)
 
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const dotenv = require("dotenv");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+
+import authRoutes from "./routes/authRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
+import facultyRoutes from "./routes/facultyRoutes.js";
 
 dotenv.config();
-
-const authRoutes = require("./routes/authRoutes");
-const studentRoutes = require("./routes/studentRoutes");
-const facultyRoutes = require("./routes/facultyRoutes");
 
 const app = express();
 
@@ -23,13 +23,16 @@ app.use("/api/auth", authRoutes);
 app.use("/api/student", studentRoutes);  // /api/student/jobs
 app.use("/api/faculty", facultyRoutes);  // /api/faculty/jobs
 
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI;
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(MONGO_URI)
   .then(() => {
     console.log("MongoDB Connected");
-    app.listen(process.env.PORT || 5000, () =>
-      console.log("Server running on port", process.env.PORT || 5000)
-    );
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err);

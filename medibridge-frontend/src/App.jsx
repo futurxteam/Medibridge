@@ -2,18 +2,46 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
-import Home from "./pages/Home";        // homepage
-import Login from "./pages/login";      // login file
-import Signup from "./pages/Signup";    // signup file
+import Home from "./pages/Home";
+import Login from "./pages/login";
+import Signup from "./pages/Signup";
 import FacultyLogin from "./pages/FacultyLogin";
+import StudentDashboard from "./pages/StudentDashboard";
+import FacultyDashboard from "./pages/FacultyDashboard";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/faculty-login" element={<FacultyLogin />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/faculty-login" element={<FacultyLogin />} />
+
+        {/* Student dashboard – needs auth */}
+        <Route
+          path="/student/jobs"
+          element={
+            <ProtectedRoute allowedRoles={["STUDENT"]}>
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Faculty dashboard – needs auth */}
+        <Route
+          path="/faculty/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["FACULTY"]}>
+              <FacultyDashboard />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </AuthProvider>
   );
 }

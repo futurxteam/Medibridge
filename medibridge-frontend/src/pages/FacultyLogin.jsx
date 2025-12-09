@@ -41,7 +41,7 @@ const FacultyLogin = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       // later: navigate("/faculty/dashboard")
-      navigate("/");
+      navigate("/faculty/dashboard");
     } catch (err) {
       console.error(err);
       setErrorMsg("Something went wrong. Please try again.");

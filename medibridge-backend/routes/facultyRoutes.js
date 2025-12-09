@@ -1,11 +1,11 @@
 // routes/facultyRoutes.js
 
-const express = require("express");
-const { auth, requireRole } = require("../middleware/authMiddleware");
-const {
+import express from "express";
+import { auth, requireRole } from "../middleware/authMiddleware.js";
+import {
   createJob,
   getJobsForFaculty,
-} = require("../controllers/jobController");
+} from "../controllers/jobController.js";
 
 const router = express.Router();
 
@@ -15,4 +15,4 @@ router.post("/jobs", auth, requireRole("FACULTY"), createJob);
 // GET /api/faculty/jobs   -> list jobs posted by this faculty
 router.get("/jobs", auth, requireRole("FACULTY"), getJobsForFaculty);
 
-module.exports = router;
+export default router;

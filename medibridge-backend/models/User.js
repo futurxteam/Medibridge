@@ -1,6 +1,6 @@
-// models/User.js
+// models/User.js (ESM)
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema(
 
     email: { type: String, required: true, unique: true },
 
-    // hashed password
     password: { type: String, required: true },
 
     // "STUDENT" | "EXTERNAL" | "FACULTY"
@@ -18,10 +17,10 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    // only relevant for STUDENT role
     isMedibridgeStudent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+export default User;

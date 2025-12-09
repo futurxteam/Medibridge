@@ -1,10 +1,8 @@
 // routes/studentRoutes.js
 
-const express = require("express");
-const { auth, requireRole } = require("../middleware/authMiddleware");
-const {
-  getJobsForStudentOrExternal,
-} = require("../controllers/jobController");
+import express from "express";
+import { auth, requireRole } from "../middleware/authMiddleware.js";
+import { getJobsForStudentOrExternal } from "../controllers/jobController.js";
 
 const router = express.Router();
 
@@ -17,4 +15,4 @@ router.get(
   getJobsForStudentOrExternal
 );
 
-module.exports = router;
+export default router;

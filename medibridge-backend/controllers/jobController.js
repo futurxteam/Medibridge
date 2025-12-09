@@ -1,9 +1,9 @@
-// controllers/jobController.js
+// controllers/jobController.js (ESM)
 
-const Job = require("../models/Job");
+import Job from "../models/Job.js";
 
 // POST /api/faculty/jobs   (FACULTY only)
-exports.createJob = async (req, res) => {
+export const createJob = async (req, res) => {
   try {
     const { title, description, eligibility } = req.body;
 
@@ -15,7 +15,7 @@ exports.createJob = async (req, res) => {
       title,
       description,
       eligibility, // "MEDIBRIDGE_ONLY" | "EXTERNAL_ONLY" | "BOTH"
-      postedBy: req.user.id, // faculty user id from token
+      postedBy: req.user.id, // faculty user id
     });
 
     res.status(201).json(job);
@@ -26,18 +26,15 @@ exports.createJob = async (req, res) => {
 };
 
 // GET /api/student/jobs   (STUDENT or EXTERNAL)
-exports.getJobsForStudentOrExternal = async (req, res) => {
+export const getJobsForStudentOrExternal = async (req, res) => {
   try {
     let filter = {};
 
     if (req.user.role === "STUDENT") {
-      // Medibridge students → MEDIBRIDGE_ONLY + BOTH
       filter = { eligibility: { $in: ["MEDIBRIDGE_ONLY", "BOTH"] } };
     } else if (req.user.role === "EXTERNAL") {
-      // External candidates → EXTERNAL_ONLY + BOTH
       filter = { eligibility: { $in: ["EXTERNAL_ONLY", "BOTH"] } };
     } else {
-      // just in case someone hits it with wrong role
       return res.status(403).json({ message: "Not allowed" });
     }
 
@@ -50,12 +47,12 @@ exports.getJobsForStudentOrExternal = async (req, res) => {
 };
 
 // GET /api/faculty/jobs   (FACULTY only)
-exports.getJobsForFaculty = async (req, res) => {
+export const getJobsForFaculty = async (req, res) => {
   try {
-    // faculty sees only their own posted jobs
     const jobs = await Job.find({ postedBy: req.user.id }).sort({
       createdAt: -1,
     });
+
     res.json(jobs);
   } catch (err) {
     console.error("Get faculty jobs error:", err);
