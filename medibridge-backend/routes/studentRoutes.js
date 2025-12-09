@@ -1,18 +1,30 @@
-// routes/studentRoutes.js   ←  replace your current file with this
+// routes/studentRoutes.js
 import { Router } from "express";
+import multer from "multer";
+const upload = multer({ dest: "uploads/" });
+
 import { auth, requireRole } from "../middleware/authMiddleware.js";
+
 import {
   getJobsForStudentOrExternal,
   applyToJob,
 } from "../controllers/jobController.js";
+
 import {
   getProfile,
   updateProfile,
+  checkProfileCompletion,
+  
 } from "../controllers/studentProfileController.js";
 
 const router = Router();
 
-// GET jobs – both STUDENT and EXTERNAL
+
+/* ============================================
+   JOB ROUTES
+============================================ */
+
+// GET all jobs for student/external
 router.get(
   "/jobs",
   auth,
@@ -20,7 +32,7 @@ router.get(
   getJobsForStudentOrExternal
 );
 
-// APPLY – clean URL
+// APPLY to job
 router.post(
   "/apply/:jobId",
   auth,
@@ -28,6 +40,11 @@ router.post(
   applyToJob
 );
 
+/* ============================================
+   PROFILE ROUTES
+============================================ */
+
+// Get profile
 router.get(
   "/profile",
   auth,
@@ -35,12 +52,21 @@ router.get(
   getProfile
 );
 
-// CREATE or UPDATE profile
+// Update profile with CV upload
 router.put(
   "/profile",
   auth,
   requireRole("STUDENT", "EXTERNAL"),
+  upload.single("cv"),   // This enables Cloudinary CV upload
   updateProfile
+);
+
+// Check completion (optional)
+router.get(
+  "/profile/check",
+  auth,
+  requireRole("STUDENT", "EXTERNAL"),
+  checkProfileCompletion
 );
 
 export default router;

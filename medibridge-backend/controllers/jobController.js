@@ -28,28 +28,31 @@ export const createJob = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-// GET /api/student/jobs → For STUDENT & EXTERNAL
 export const getJobsForStudentOrExternal = async (req, res) => {
   try {
     let filter = {};
 
+    console.log("USER ROLE:", req.user.role); // DEBUG
+
     if (req.user.role === "STUDENT") {
       filter.eligibility = { $in: ["MEDIBRIDGE_ONLY", "BOTH"] };
-    } else if (req.user.role === "EXTERNAL") {
+    } 
+    else if (req.user.role === "EXTERNAL") {
       filter.eligibility = { $in: ["EXTERNAL_ONLY", "BOTH"] };
-    } else {
-      return res.status(403).json({ message: "Access denied." });
+    } 
+    else {
+      return res.status(403).json({ message: "Unauthorized role" });
     }
 
     const jobs = await Job.find(filter)
       .populate("postedBy", "name email")
       .sort({ createdAt: -1 });
 
-    res.json(jobs);
+    return res.json(jobs);
+
   } catch (err) {
     console.error("Get jobs error:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

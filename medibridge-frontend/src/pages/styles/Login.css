@@ -1,34 +1,61 @@
-/* LOGIN PAGE STYLING */
+/* LOGIN PAGE — MATCH HOME.CSS BLUE THEME */
 
+/* PAGE BACKGROUND */
 .auth-page {
   min-height: 100vh;
-  background: radial-gradient(circle at top, #1d2b64, #050816 55%);
+  background: radial-gradient(circle at top, #bcd4ff, #e8f1ff 55%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 30px;
+  position: relative;
 }
 
+/* Soft glowing background arc */
+.auth-page::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(180, 210, 255, 0.55),
+    rgba(200, 225, 255, 0.35),
+    rgba(220, 235, 255, 0.25),
+    transparent
+  );
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+/* LOGIN CARD */
 .auth-card {
   width: 380px;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(255, 255, 255, 0.85); /* light glass */
   border-radius: 20px;
   padding: 28px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(150, 180, 240, 0.45);
+  box-shadow: 0 20px 45px rgba(150, 180, 240, 0.35);
+  backdrop-filter: blur(16px);
 }
 
+/* TITLES */
 .auth-title {
   font-size: 1.8rem;
   margin-bottom: 6px;
-  color: #fff;
+  color: #0f172a; /* dark blue text */
 }
 
 .auth-sub {
-  color: #9ca3af;
+  color: #475569; /* muted text */
   margin-bottom: 22px;
 }
 
+/* FORM GROUPS */
 .auth-group {
   margin-bottom: 15px;
 }
@@ -36,48 +63,95 @@
 .auth-label {
   display: block;
   margin-bottom: 6px;
-  color: #fff;
+  color: #0f172a;
   font-size: 0.9rem;
 }
 
+/* INPUTS */
 .auth-input {
   width: 100%;
   padding: 10px 12px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(180, 210, 255, 0.35);
+  border: 1px solid rgba(150, 180, 240, 0.6);
   border-radius: 12px;
-  color: white;
+  color: #000;
 }
 
 .auth-input:focus {
   border-color: #6366f1;
   outline: none;
+  background: rgba(180, 210, 255, 0.5);
 }
 
+/* LOGIN BUTTON */
 .auth-btn {
   width: 100%;
   padding: 12px;
   border: none;
   margin-top: 8px;
   background: #6366f1;
-  border-radius: 12px;
+  border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
   color: #fff;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
 }
 
 .auth-btn:hover {
   background: #4f46e5;
 }
 
+/* FOOTER */
 .auth-footer {
   margin-top: 18px;
-  color: #9ca3af;
+  color: #475569;
   font-size: 0.85rem;
   text-align: center;
 }
 
 .auth-link {
-  color: #6366f1;
+  color: #2563eb;
   cursor: pointer;
+  font-weight: 600;
+}
+.auth-input-error {
+  border-color: #ef4444;
+}
+
+.auth-field-error {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+/* Small OTP Button */
+.otp-btn {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #fff;
+
+  transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.otp-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.otp-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.otp-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
 }

@@ -5,10 +5,9 @@
   --text-main: #0f172a; /* dark text */
   --text-muted: #475569; /* muted text */
   --accent: #2563eb; /* blue accent */
-  --accent-soft: rgba(37, 99, 235, 0.35); 
+  --accent-soft: rgba(37, 99, 235, 0.35);
   --radius-lg: 18px;
 }
-
 
 /* PAGE WRAPPER */
 .page {
@@ -22,7 +21,6 @@
   flex-direction: column;
   position: relative;
 }
-
 
 /* SMALLER BACKGROUND ARC */
 .page::before {
@@ -53,27 +51,18 @@
   justify-content: space-between;
   padding: 10px 22px;
   border-radius: 999px;
-
-  /* 🌟 OFF-WHITE HEADER BACKGROUND */
-  background: #f8f8f4;  /* off-white / cream */
-
-  /* softer border for light theme */
+  background: #f8f8f4; /* off-white header background */
   border: 1px solid rgba(0, 0, 0, 0.08);
-
-  /* keep blur subtle */
   backdrop-filter: blur(12px);
-
   margin-bottom: 40px;
   position: relative;
   z-index: 10;
 }
 
-
 .nav-left {
   display: flex;
   align-items: center;
   gap: 18px;
-  
 }
 
 /* actual image logo used in Home.jsx */
@@ -128,7 +117,6 @@
   cursor: pointer;
   box-shadow: 0 10px 24px rgba(99, 102, 241, 0.35);
 }
-
 
 /* LOGGED IN USER CHIP */
 .nav-user-chip {
@@ -205,16 +193,17 @@
   max-width: 620px;
 }
 
+/* top pill: Student job platform • Medibridge */
 .hero-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 0.75rem;
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: rgba(15, 23, 42, 0.8);
-  color: var(--text-muted);
+  border: 1px solid rgba(150, 180, 240, 0.55);
+  background: rgba(180, 210, 255, 0.45);
+  color: #000;
   margin-bottom: 14px;
 }
 
@@ -244,19 +233,16 @@
   margin-bottom: 12px;
 }
 
-.hero-primary,
-.hero-secondary {
+/* Student login – primary pill */
+.hero-primary {
   border-radius: 999px;
   padding: 10px 20px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  border: none;
-}
-
-.hero-primary {
   background: #6366f1;
   color: #f9fafb;
+  border: none;
   box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
 }
 
@@ -264,14 +250,20 @@
   background: #4f46e5;
 }
 
+/* External Candidates Login – soft blue pill */
 .hero-secondary {
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--text-main);
-  border: 1px solid rgba(148, 163, 184, 0.55);
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(180, 210, 255, 0.4);
+  color: #000;
+  border: 1px solid rgba(150, 180, 240, 0.55);
 }
 
 .hero-secondary:hover {
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(180, 210, 255, 0.6);
 }
 
 .hero-metadata {
@@ -292,7 +284,7 @@
   border-radius: 24px;
   border: 1px solid var(--border-subtle);
   padding: 18px 20px;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.8);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
   position: relative;
   overflow: hidden;
 }
@@ -309,10 +301,11 @@
   padding: 4px 10px;
   border-radius: 999px;
   background: rgba(22, 163, 74, 0.18);
-  color: #bbf7d0;
+  color: #15803d;
   border: 1px solid rgba(34, 197, 94, 0.5);
 }
 
+/* JOB OVERVIEW METRICS */
 .dashboard-metrics {
   display: flex;
   gap: 16px;
@@ -321,15 +314,16 @@
 
 .metric {
   flex: 1;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(180, 210, 255, 0.35);
   border-radius: 16px;
   padding: 10px 12px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid rgba(150, 180, 240, 0.45);
+  color: #000;
 }
 
 .metric-label {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: #000;
 }
 
 .metric-value {
@@ -340,20 +334,22 @@
 }
 
 .metric-value.accent {
-  color: #a5b4fc;
+  color: #4f46e5;
 }
 
 .metric-sub {
   font-size: 0.7rem;
-  color: var(--text-muted);
+  color: #000;
 }
 
+/* JOB LIST */
 .dashboard-list {
   margin-top: 6px;
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(150, 180, 240, 0.45);
+  background: rgba(180, 210, 255, 0.3);
   overflow: hidden;
+  color: #000;
 }
 
 .list-row {
@@ -365,11 +361,12 @@
 }
 
 .list-header {
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(180, 210, 255, 0.4);
   font-size: 0.7rem;
-  color: var(--text-muted);
+  color: #000;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .pill {
@@ -383,19 +380,19 @@
 .pill-purple {
   background: rgba(129, 140, 248, 0.15);
   border-color: rgba(129, 140, 248, 0.6);
-  color: #e0e7ff;
+  color: #1e1b4b;
 }
 
 .pill-green {
   background: rgba(34, 197, 94, 0.12);
   border-color: rgba(34, 197, 94, 0.55);
-  color: #bbf7d0;
+  color: #14532d;
 }
 
 .pill-yellow {
   background: rgba(234, 179, 8, 0.12);
   border-color: rgba(234, 179, 8, 0.6);
-  color: #fef9c3;
+  color: #713f12;
 }
 
 /* SECTIONS BELOW HERO */
@@ -425,22 +422,25 @@
   line-height: 1.6;
 }
 
+/* MINI CARDS – light blue */
 .section-cards {
   display: grid;
   gap: 12px;
 }
 
 .mini-card {
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(180, 210, 255, 0.35);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(150, 180, 240, 0.45);
   padding: 14px 16px;
   font-size: 0.9rem;
+  color: #000;
 }
 
 .mini-card h3 {
   font-size: 1rem;
   margin-bottom: 6px;
+  color: #000;
 }
 
 /* STEPS */
@@ -455,13 +455,15 @@
   gap: 18px;
 }
 
+/* How Medibridge works cards */
 .step {
   position: relative;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(180, 210, 255, 0.35);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(150, 180, 240, 0.45);
   padding: 18px 16px 18px 18px;
   font-size: 0.9rem;
+  color: #000;
 }
 
 .step-number {
@@ -470,31 +472,36 @@
   right: 14px;
   font-size: 1.8rem;
   font-weight: 700;
-  color: rgba(148, 163, 184, 0.25);
+  color: rgba(0, 0, 0, 0.25);
 }
 
-/* FINAL CTA */
+/* FINAL CTA – light blue gradient */
 .final-cta {
   margin-top: 10px;
   padding: 20px 18px;
   border-radius: 22px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
   background: linear-gradient(
     120deg,
-    rgba(79, 70, 229, 0.28),
-    rgba(15, 23, 42, 0.98)
+    rgba(180, 210, 255, 0.55),
+    rgba(200, 225, 255, 0.35)
   );
+  border: 1px solid rgba(150, 180, 240, 0.45);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 18px;
   flex-wrap: wrap;
+  color: #000;
+}
+
+.final-cta h2 {
+  color: #000;
 }
 
 .final-cta p {
   margin-top: 6px;
   font-size: 0.95rem;
-  color: var(--text-muted);
+  color: #000;
 }
 
 .cta-buttons {
@@ -513,7 +520,7 @@
   align-items: center;
   gap: 16px;
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: #64748b;
   flex-wrap: wrap;
 }
 
@@ -529,18 +536,19 @@
   gap: 8px;
 }
 
+/* Footer admin button – light blue pill */
 .footer-admin-btn {
   padding: 6px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
+  border: 1px solid rgba(150, 180, 240, 0.6);
+  background: rgba(180, 210, 255, 0.5);
+  color: #000;
   font-size: 0.8rem;
   cursor: pointer;
 }
 
 .footer-admin-btn:hover {
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(180, 210, 255, 0.7);
 }
 
 /* RESPONSIVE */
@@ -573,4 +581,15 @@
   .final-cta {
     align-items: flex-start;
   }
+}
+/* HEADER GRADIENT — STYLE C */
+.page .nav {
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.90),
+    rgba(220, 235, 255, 0.70)
+  ) !important;
+
+  border: 1px solid rgba(180, 200, 255, 0.40) !important;
+  backdrop-filter: blur(18px) !important;
 }

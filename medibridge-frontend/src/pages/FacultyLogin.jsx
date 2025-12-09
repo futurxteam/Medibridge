@@ -49,16 +49,11 @@ const FacultyLogin = () => {
     <div className="auth-page">
       <div className="auth-card" style={{ maxWidth: "420px" }}>
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Faculty Portal</h1>
-          <p className="text-sm text-gray-600 mt-2">
-            Medibridge / FutureAce Staff Only
-          </p>
+        
         </div>
 
         <h2 className="auth-title">Faculty Login</h2>
-        <p className="auth-sub">
-          Restricted access • Faculty accounts are created by admin only
-        </p>
+        
 
         <form onSubmit={handleSubmit}>
           <div className="auth-group">
@@ -99,14 +94,9 @@ const FacultyLogin = () => {
         </form>
 
         {/* No signup link — accounts are admin-created only */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-gray-500">
-            Faculty accounts are created by the Medibridge administration.<br />
-            Contact <strong>admin@medibridge.com</strong> if you need access.
-          </p>
-        </div>
+      
 
-       =
+       
       </div>
     </div>
   );

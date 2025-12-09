@@ -51,7 +51,7 @@ const Login = () => {
       <div className="auth-card">
         <h2 className="auth-title">Student Login</h2>
         <p className="auth-sub">
-          Welcome back, Medibridge / FutureAce student
+          Welcome back
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -80,7 +80,23 @@ const Login = () => {
             />
           </div>
 
-          {errorMsg && <p className="auth-error">{errorMsg}</p>}
+        {errorMsg && (
+  <div
+    style={{
+      background: "#ffdddd",
+      color: "#b30000",
+      padding: "10px 12px",
+      borderRadius: "6px",
+      marginTop: "10px",
+      marginBottom: "10px",
+      fontSize: "14px",
+      border: "1px solid #ffb3b3",
+      fontWeight: "500"
+    }}
+  >
+    {errorMsg}
+  </div>
+)}
 
           <button
             className="auth-btn"
@@ -98,9 +114,7 @@ const Login = () => {
           </span>
         </p>
 
-        <p className="auth-footer" style={{ marginTop: "1.8rem", fontSize: "0.85rem", color: "#666" }}>
-          Faculty & staff use the separate admin portal.
-        </p>
+        
       </div>
     </div>
   );

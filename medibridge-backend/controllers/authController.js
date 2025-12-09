@@ -1,15 +1,11 @@
-// controllers/authController.js
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import AcademyStudent from "../models/AcademyStudent.js";
 
-// Generate JWT token — only include id and role
 const createToken = (user) => {
   return jwt.sign(
-    {
-      id: user._id,
-      role: user.role, // "STUDENT" | "EXTERNAL" | "FACULTY"
-    },
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -18,9 +14,8 @@ const createToken = (user) => {
 // POST /api/auth/register
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, admissionNo } = req.body;
 
-    // Validate required fields
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required." });
     }
@@ -31,15 +26,44 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "Email already registered." });
     }
 
+    /* =======================================================
+       IF ROLE = STUDENT → it means ACADEMY student
+       Validate admission number against AcademyStudents DB
+    ======================================================= */
+    if (role === "STUDENT") {
+      if (!admissionNo) {
+        return res.status(400).json({
+          message: "Admission number is required for academy students",
+        });
+      }
+
+      // Search in whitelist collection
+      const academyRecord = await AcademyStudent.findOne({ admissionNo });
+
+      if (!academyRecord) {
+        return res.status(400).json({
+          message: "Invalid admission number. Not found in academy records.",
+        });
+      }
+
+      // Optional: name matching for safety
+      if (academyRecord.name.toLowerCase() !== name.toLowerCase()) {
+        return res.status(400).json({
+          message: "Admission number does not match the student name.",
+        });
+      }
+    }
+
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user — NO isMedibridgeStudent anymore!
+    // Create user with or without admissionNo
     const user = await User.create({
       name,
       email,
       password: passwordHash,
-      role, // "STUDENT", "EXTERNAL", or "FACULTY"
+      role,
+      admissionNo: role === "STUDENT" ? admissionNo : null,
     });
 
     const token = createToken(user);
@@ -60,31 +84,20 @@ export const register = async (req, res) => {
   }
 };
 
-// POST /api/auth/login
 export const login = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password)
       return res.status(400).json({ message: "Email and password are required." });
-    }
 
     const user = await User.findOne({ email });
-    if (!user) {
+    if (!user)
       return res.status(400).json({ message: "Invalid credentials." });
-    }
-
-    // Optional: Enforce role match (recommended)
-    if (role && user.role !== role) {
-      return res.status(400).json({
-        message: `This account is registered as ${user.role}. Please select the correct role.`,
-      });
-    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials." });
-    }
 
     const token = createToken(user);
 
@@ -97,6 +110,7 @@ export const login = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });

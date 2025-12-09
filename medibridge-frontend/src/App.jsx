@@ -9,7 +9,6 @@ import FacultyLogin from "./pages/FacultyLogin";
 
 import StudentDashboard from "./pages/StudentDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
-import StudentProfile from "./pages/StudentProfile";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
@@ -35,14 +34,7 @@ export default function App() {
         />
 
         {/* STUDENT PROFILE (NEW) */}
-        <Route
-          path="/student/profile"
-          element={
-            <ProtectedRoute allowedRoles={["STUDENT"]}>
-              <StudentProfile />
-            </ProtectedRoute>
-          }
-        />
+       
 
         {/* FACULTY DASHBOARD */}
         <Route

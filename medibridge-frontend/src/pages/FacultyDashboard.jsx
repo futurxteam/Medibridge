@@ -7,15 +7,27 @@ import {
   createJob,
   getApplicationsByJob,
   createStudentByFaculty,
+  getAllRecords,
+  createRecord,
+  updateRecord,
+  deleteRecord,
+  getRecordById
 } from "../api/api";
 import { useNavigate } from "react-router-dom";
-
+import SidebarLayout from "../components/sideBar";
 const FacultyDashboard = () => {
+  const [activeTab, setActiveTab] = useState("JOBS");
+
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+const [records, setRecords] = useState([]);
+const [recordName, setRecordName] = useState("");
+const [admissionNo, setAdmissionNo] = useState("");
+
+const [editingId, setEditingId] = useState(null);
 
   const [showCreateJob, setShowCreateJob] = useState(false);
   const [showCreateStudent, setShowCreateStudent] = useState(false);
@@ -37,6 +49,19 @@ const FacultyDashboard = () => {
   const [studentPassword, setStudentPassword] = useState("");
 
   const [msg, setMsg] = useState("");
+
+useEffect(() => {
+  if (activeTab === "STUDENT_RECORDS") {
+    loadRecords();
+  }
+}, [activeTab]);
+
+const loadRecords = async () => {
+  const res = await getAcademyRecords();
+setRecords(Array.isArray(res.data) ? res.data : []);
+
+};
+
 
   // Load all jobs
   useEffect(() => {
@@ -86,6 +111,49 @@ const FacultyDashboard = () => {
       setMsg("Job posted successfully!");
     }
   };
+const handleAddRecord = async (e) => {
+  e.preventDefault();
+  const res = await createRecord({ admissionNo, name: recordName });
+
+  if (res.success) {
+    setAdmissionNo("");
+    setRecordName("");
+    loadRecords();
+    setMsg("Record created successfully!");
+  }
+};
+const startEdit = async (id) => {
+  const res = await getRecordById(id);
+  if (res.success) {
+    setEditingId(id);
+    setAdmissionNo(res.data.admissionNo);
+    setRecordName(res.data.name);
+  }
+};
+const handleUpdateRecord = async (e) => {
+  e.preventDefault();
+  const res = await updateRecord(editingId, {
+    admissionNo,
+    name: recordName
+  });
+
+  if (res.success) {
+    setEditingId(null);
+    setAdmissionNo("");
+    setRecordName("");
+    loadRecords();
+    setMsg("Record updated!");
+  }
+};
+const handleDeleteRecord = async (id) => {
+  if (!window.confirm("Delete this record?")) return;
+
+  const res = await deleteRecord(id);
+  if (res.success) {
+    loadRecords();
+    setMsg("Record deleted successfully!");
+  }
+};
 
   // Create student
   const handleCreateStudent = async (e) => {
@@ -115,99 +183,118 @@ const FacultyDashboard = () => {
     logout();
     navigate("/");
   };
-
-  return (
+return (
+  <SidebarLayout
+    menu={[
+      { label: "All Jobs", onClick: () => setActiveTab("JOBS") },
+      { label: "Post New Job", onClick: () => setActiveTab("POST") },
+      { label: "Create Student", onClick: () => setActiveTab("CREATE_STUDENT") },
+          { label: "Academy Student Records", onClick: () => setActiveTab("STUDENT_RECORDS") },
+    ]}
+  >
     <div className="page">
 
-      {/* NAVBAR */}
-      <header className="nav">
-        <div className="nav-left" onClick={() => navigate("/")}>
-          <img src="/Medibridge.png" alt="Logo" className="nav-logo" />
-        </div>
+      {msg && <div className="msg-banner">{msg}</div>}
 
-        <div className="nav-links">
-          <strong>Faculty Portal</strong>
-        </div>
+      {/* =========================
+          TAB 1 — ALL JOBS
+      ========================== */}
+      {activeTab === "JOBS" && (
+        <main className="section">
+          <h1 className="text-4xl font-bold mb-8">All Jobs</h1>
 
-        <div className="nav-right">
-          <span>Hello, <strong>{user?.name}</strong></span>
-          <button onClick={handleLogout} className="nav-logout-btn">Logout</button>
-        </div>
-      </header>
+          {loading ? (
+            <p>Loading...</p>
+          ) : jobs.length === 0 ? (
+            <p>No jobs posted.</p>
+          ) : (
+            <div className="job-list">
+              {jobs.map((job) => (
+                <div key={job._id} className="job-card">
+                  
+                  <div className="job-header">
+                    <div>
+                      <h3 className="job-title">{job.title}</h3>
+                      <p className="job-eligibility">{job.eligibility}</p>
+                      <p className="job-desc">{job.description}</p>
+                    </div>
 
-      <main className="section" style={{ maxWidth: "1200px", margin: "0 auto", padding: "2rem" }}>
+                    <button
+                      className="view-btn"
+                      onClick={() => toggleApplicants(job._id)}
+                    >
+                      {selectedJob === job._id ? "Hide" : "View Applicants"}
+                    </button>
+                  </div>
 
-        <h1 className="text-4xl font-bold mb-8">Faculty Job & Student Management</h1>
+                  {selectedJob === job._id && (
+                    <div className="accordion">
+                      <h4>Applicants</h4>
 
-        {msg && (
-          <div className="msg-banner">
-            {msg}
-          </div>
-        )}
+                      {loadingApplicants ? (
+                        <p>Loading...</p>
+                      ) : applications.length === 0 ? (
+                        <p>No applicants.</p>
+                      ) : (
+                        <div className="applicant-list">
+                          {applications.map((app) => (
+                            <div key={app._id} className="applicant-card">
+                              <strong>{app.user.name}</strong>
+                              <p>{app.user.email}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      )}
 
-        {/* ACTION BUTTONS */}
-        <div className="action-buttons">
-          <button
-            onClick={() => setShowCreateJob(!showCreateJob)}
-            className="action-btn blue"
-          >
-            Post New Job
-          </button>
+      {/* =========================
+          TAB 2 — POST JOB
+      ========================== */}
+      {activeTab === "POST" && (
+        <main className="section">
+          <h1 className="text-3xl font-bold mb-6">Post New Job</h1>
 
-          <button
-            onClick={() => setShowCreateStudent(!showCreateStudent)}
-            className="action-btn purple"
-          >
-            Create Student Account
-          </button>
-        </div>
-
-        {/* CREATE JOB FORM */}
-        {showCreateJob && (
           <div className="form-card">
-            <h2 className="form-title">Post New Job</h2>
-
             <form onSubmit={handleCreateJob} className="form-body">
 
               <label>Job Title</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+              <input value={title} onChange={(e) => setTitle(e.target.value)} />
 
               <label>Description</label>
               <textarea
-                rows={4}
+                rows="4"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                required
               />
 
               <label>Eligibility</label>
-              <select
-                value={eligibility}
-                onChange={(e) => setEligibility(e.target.value)}
-              >
+              <select value={eligibility} onChange={(e) => setEligibility(e.target.value)}>
                 <option value="BOTH">Open to All</option>
-                <option value="MEDIBRIDGE_ONLY">Medibridge Students Only</option>
+                <option value="MEDIBRIDGE_ONLY">Medibridge Only</option>
                 <option value="EXTERNAL_ONLY">External Only</option>
               </select>
 
-              <div className="form-actions">
-                <button type="submit" className="save-btn">Post Job</button>
-                <button type="button" className="cancel-btn" onClick={() => setShowCreateJob(false)}>Cancel</button>
-              </div>
+              <button type="submit" className="save-btn">Post Job</button>
             </form>
           </div>
-        )}
+        </main>
+      )}
 
-        {/* CREATE STUDENT */}
-        {showCreateStudent && (
+      {/* =========================
+          TAB 3 — CREATE STUDENT
+      ========================== */}
+      {activeTab === "CREATE_STUDENT" && (
+        <main className="section">
+          <h1 className="text-3xl font-bold mb-6">Create Student Account</h1>
+
           <div className="form-card">
-            <h2 className="form-title">Create Medibridge Student</h2>
-
             <form onSubmit={handleCreateStudent} className="form-body">
 
               <label>Student Name</label>
@@ -215,7 +302,6 @@ const FacultyDashboard = () => {
                 type="text"
                 value={studentName}
                 onChange={(e) => setStudentName(e.target.value)}
-                required
               />
 
               <label>Email</label>
@@ -223,7 +309,6 @@ const FacultyDashboard = () => {
                 type="email"
                 value={studentEmail}
                 onChange={(e) => setStudentEmail(e.target.value)}
-                required
               />
 
               <label>Temporary Password</label>
@@ -231,95 +316,74 @@ const FacultyDashboard = () => {
                 type="text"
                 value={studentPassword}
                 onChange={(e) => setStudentPassword(e.target.value)}
-                required
               />
 
-              <div className="form-actions">
-                <button type="submit" className="save-btn purple">Create</button>
-                <button type="button" className="cancel-btn" onClick={() => setShowCreateStudent(false)}>Cancel</button>
-              </div>
+              <button type="submit" className="save-btn purple">Create</button>
             </form>
           </div>
-        )}
+        </main>
+      )}
+{activeTab === "STUDENT_RECORDS" && (
+  <main className="section">
+    <h1 className="text-3xl font-bold mb-6">Academy Student Records</h1>
 
-        {/* JOB LIST */}
-        <h2 className="section-title">All Jobs</h2>
+    {/* CREATE / EDIT FORM */}
+    <div className="form-card">
+      <form
+        onSubmit={editingId ? handleUpdateRecord : handleAddRecord}
+        className="form-body"
+      >
+        <label>Admission No</label>
+        <input
+          type="text"
+          value={admissionNo}
+          onChange={(e) => setAdmissionNo(e.target.value)}
+          required
+        />
 
-        {loading ? (
-          <p>Loading...</p>
-        ) : jobs.length === 0 ? (
-          <p>No jobs posted.</p>
-        ) : (
-          <div className="job-list">
-            {jobs.map((job) => (
-              <div key={job._id} className="job-card">
+        <label>Student Name</label>
+        <input
+          type="text"
+          value={recordName}
+          onChange={(e) => setRecordName(e.target.value)}
+          required
+        />
 
-                <div className="job-header">
-                  <div>
-                    <h3 className="job-title">{job.title}</h3>
-                    <p className="job-eligibility">{job.eligibility.replace("_", " ")}</p>
-                    <p className="job-desc">{job.description}</p>
-                  </div>
-
-                  <button
-                    className="view-btn"
-                    onClick={() => toggleApplicants(job._id)}
-                  >
-                    {selectedJob === job._id ? "Hide" : "View Applicants"}
-                  </button>
-                </div>
-
-                <p className="job-date">Posted: {new Date(job.createdAt).toLocaleDateString()}</p>
-
-                {/* ACCORDION - APPLICANTS INSIDE CARD */}
-                {selectedJob === job._id && (
-                  <div className="accordion">
-                    <div className="accordion-header">
-                      <h4>Applicants</h4>
-
-                      <select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        className="filter-select"
-                      >
-                        <option value="ALL">All</option>
-                        <option value="STUDENT">Medibridge Students</option>
-                        <option value="EXTERNAL">External</option>
-                      </select>
-                    </div>
-
-                    {loadingApplicants ? (
-                      <p>Loading...</p>
-                    ) : filteredApps.length === 0 ? (
-                      <p>No applicants.</p>
-                    ) : (
-                      <div className="applicant-list">
-                        {filteredApps.map((app) => (
-                          <div key={app._id} className="applicant-card">
-                            <strong>{app.user.name}</strong>
-                            <span className="role-tag">
-                              {app.user.role === "STUDENT"
-                                ? "Medibridge Student"
-                                : "External Candidate"}
-                            </span>
-                            <p>Email: {app.user.email}</p>
-                            <p className="date-small">
-                              Applied: {new Date(app.appliedAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
+        <button type="submit" className="save-btn">
+          {editingId ? "Update Record" : "Add Record"}
+        </button>
+      </form>
     </div>
-  );
+
+    {/* RECORD LIST */}
+    <div className="record-list">
+      {records.length === 0 ? (
+        <p>No records found.</p>
+      ) : (
+        records.map((rec) => (
+          <div key={rec._id} className="job-card">
+            <h3>{rec.name}</h3>
+            <p className="job-desc">Admission No: {rec.admissionNo}</p>
+
+            <div className="record-actions">
+              <button className="view-btn" onClick={() => startEdit(rec._id)}>
+                Edit
+              </button>
+              <button className="delete-btn" onClick={() => handleDeleteRecord(rec._id)}>
+                Delete
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </main>
+)}
+
+    </div>
+  </SidebarLayout>
+);
+
 };
 
 export default FacultyDashboard;

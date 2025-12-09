@@ -94,7 +94,7 @@ const Home = () => {
                   onClick={() => {
                     if (user.role === "STUDENT") navigate("/student/jobs");
                     else if (user.role === "EXTERNAL")
-                      navigate("/external/jobs");
+                      navigate("/student/jobs");
                     else if (user.role === "FACULTY")
                       navigate("/faculty/dashboard");
                     else navigate("/");

@@ -19,13 +19,32 @@ const handleResponse = async (res) => {
 
 // AUTH
 export const register = async (body) => {
-  const res = await fetch(`${API_BASE}/api/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return { success: res.ok, data: await handleResponse(res).catch(() => null), error: res.ok ? null : (await res.json()).message };
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+
+    // Extract proper message
+    const errorMessage =
+      data?.message ||
+      data?.error ||
+      "Something went wrong. Please try again.";
+
+    return {
+      success: res.ok,
+      data: res.ok ? data : null,
+      error: res.ok ? null : errorMessage
+    };
+
+  } catch (err) {
+    return { success: false, error: "Network error" };
+  }
 };
+
 
 export const login = async (body) => {
   const res = await fetch(`${API_BASE}/api/auth/login`, {
@@ -55,17 +74,18 @@ export const getStudentProfile = async () => {
 };
 
 // UPDATE/CREATE profile
-export const updateStudentProfile = async (profile) => {
+export const updateStudentProfile = async (formData) => {
   const res = await fetch(`${API_BASE}/api/student/profile`, {
     method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(profile),
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      // ❌ DO NOT SET CONTENT-TYPE → browser will set multipart boundary
+    },
+    body: formData,
   });
-  return {
-    success: res.ok,
-    data: res.ok ? await handleResponse(res) : null,
-    error: res.ok ? null : (await res.json()).message,
-  };
+
+  const data = await res.json();
+  return { success: res.ok, data, error: res.ok ? null : data.message };
 };
 
 
@@ -157,4 +177,80 @@ export const saveStudentProfile = async (body) => {
     body: JSON.stringify(body),
   });
   return await handleResponse(res);
+};
+
+/* -------------------------------
+   SEND OTP
+-------------------------------- */
+export const sendOtp = async (email) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/otp/send`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json();
+    return { success: res.ok, data, error: res.ok ? null : data.message };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+/* -------------------------------
+   VERIFY OTP
+-------------------------------- */
+export const verifyOtp = async (email, code) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/otp/verify`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ email, code }),
+    });
+
+    const data = await res.json();
+    return { success: res.ok, data, error: res.ok ? null : data.message };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+/* -----------------------------
+   ACADEMIC RECORD CRUD (FACULTY)
+------------------------------ */
+export const getAcademyRecords = async () => {
+  const res = await fetch(`${API_BASE}/api/faculty/getrecord`, {
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  return { success: res.ok, data };
+};
+
+export const createAcademyRecord = async (record) => {
+  const res = await fetch(`${API_BASE}/api/faculty/addrecord`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(record),
+  });
+  const data = await res.json();
+  return { success: res.ok, data };
+};
+
+export const updateAcademyRecord = async (id, updates) => {
+  const res = await fetch(`${API_BASE}/api/faculty/updaterecord/${id}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updates),
+  });
+  const data = await res.json();
+  return { success: res.ok, data };
+};
+
+export const deleteAcademyRecord = async (id) => {
+  const res = await fetch(`${API_BASE}/api/faculty/delete/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  const data = await res.json();
+  return { success: res.ok, data };
 };
