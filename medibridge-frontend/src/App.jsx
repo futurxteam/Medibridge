@@ -9,7 +9,7 @@ import FacultyLogin from "./pages/FacultyLogin";
 
 import StudentDashboard from "./pages/StudentDashboard";
 import FacultyDashboard from "./pages/FacultyDashboard";
-
+import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -22,6 +22,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/faculty-login" element={<FacultyLogin />} />
+    <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* STUDENT DASHBOARD */}
         <Route

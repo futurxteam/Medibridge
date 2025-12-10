@@ -7,15 +7,15 @@ import {
   updateJob,
   deleteJob,
   getApplicationsForJob,
-  
+  bulkCreateJobs
 } from "../controllers/jobController.js";
 import {
-  createStudent,
-  getStudents,
-  getStudentById,
-  updateStudent,
-  deleteStudent
-} from "../controllers/academyRecordController.js";
+  addReferralCodes,
+  getReferralCodes,
+  deleteReferralCode,
+  toggleReferralStatus
+} from "../controllers/referralController.js";
+
 
 const router = Router();
 
@@ -27,21 +27,19 @@ router.delete("/jobs/:id", auth, requireRole("FACULTY"), deleteJob);
 
 // ── APPLICATION MANAGEMENT ──
 router.get("/jobs/:id/applications", auth, requireRole("FACULTY"), getApplicationsForJob);
+// All referral actions are faculty-only
+router.post("/referral/add", auth, requireRole("FACULTY"), addReferralCodes);
+router.get("/referral/all", auth, requireRole("FACULTY"), getReferralCodes);
+router.delete("/referral/:code", auth, requireRole("FACULTY"), deleteReferralCode);
+router.patch("/refferal/:code/toggle", auth, requireRole("FACULTY"), toggleReferralStatus);
+router.post(
+  "/jobs/bulk",
+  auth,
+  requireRole("FACULTY"),
+  bulkCreateJobs
+);
 
-// CREATE
-router.post("/addrecord", createStudent);
 
-// READ ALL
-router.get("/getrecord", getStudents);
-
-// READ ONE
-router.get("/getrecord/:id", getStudentById);
-
-// UPDATE
-router.put("/updaterecord/:id", updateStudent);
-
-// DELETE
-router.delete("/delete/:id", deleteStudent);
 
 export default router;
 

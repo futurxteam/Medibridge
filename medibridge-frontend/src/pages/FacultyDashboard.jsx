@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import "./styles/Dashboard.css";
 import { useAuth } from "../context/AuthContext";
+import * as XLSX from "xlsx";
+
 import {
   getFacultyJobs,
   createJob,
@@ -11,8 +13,15 @@ import {
   createRecord,
   updateRecord,
   deleteRecord,
-  getRecordById
+  getRecordById,
+  addReferralCodesAPI,
+  getReferralList,
+  deleteReferral,
+  bulkCreateJobs
 } from "../api/api";
+
+
+
 import { useNavigate } from "react-router-dom";
 import SidebarLayout from "../components/sideBar";
 const FacultyDashboard = () => {
@@ -20,6 +29,8 @@ const FacultyDashboard = () => {
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+const [uploadFile, setUploadFile] = useState(null);
+const [bulkMsg, setBulkMsg] = useState("");
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,13 +46,18 @@ const [editingId, setEditingId] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null); // expanded card
   const [applications, setApplications] = useState([]);
   const [loadingApplicants, setLoadingApplicants] = useState(false);
+const [referralCodes, setReferralCodes] = useState([]);
+const [newCodes, setNewCodes] = useState("");
 
   const [filter, setFilter] = useState("ALL");
 
   // Job form state
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [eligibility, setEligibility] = useState("BOTH");
+  // Job form state
+const [title, setTitle] = useState("");
+const [phone,setPhone]=useState("");
+const [description, setDescription] = useState("");
+const [eligibility, setEligibility] = useState("BOTH");
+const [recruiterEmail, setRecruiterEmail] = useState(""); // NEW
 
   // Student form state
   const [studentName, setStudentName] = useState("");
@@ -49,6 +65,14 @@ const [editingId, setEditingId] = useState(null);
   const [studentPassword, setStudentPassword] = useState("");
 
   const [msg, setMsg] = useState("");
+useEffect(() => {
+  if (activeTab === "REFERRALS") loadReferralCodes();
+}, [activeTab]);
+
+const loadReferralCodes = async () => {
+  const res = await getReferralList();
+  if (res.success) setReferralCodes(res.data);
+};
 
 useEffect(() => {
   if (activeTab === "STUDENT_RECORDS") {
@@ -104,18 +128,27 @@ const loadRecords = async () => {
 
   // Create job
   const handleCreateJob = async (e) => {
-    e.preventDefault();
-    const result = await createJob({ title, description, eligibility });
+  e.preventDefault();
 
-    if (result.success) {
-      setJobs([result.data, ...jobs]);
-      setTitle("");
-      setDescription("");
-      setEligibility("BOTH");
-      setShowCreateJob(false);
-      setMsg("Job posted successfully!");
-    }
-  };
+  const result = await createJob({
+    title,
+    description,
+    eligibility,
+    recruiterEmail,
+    phone
+  });
+
+  if (result.success) {
+    setJobs([result.data, ...jobs]);
+    setTitle("");
+    setDescription("");
+    setEligibility("BOTH");
+    setRecruiterEmail("");
+    setShowCreateJob(false);
+    setMsg("Job posted successfully!");
+  }
+};
+
 const handleAddRecord = async (e) => {
   e.preventDefault();
   const res = await createRecord({ admissionNo, name: recordName });
@@ -159,6 +192,50 @@ const handleDeleteRecord = async (id) => {
     setMsg("Record deleted successfully!");
   }
 };
+const handleBulkUpload = async () => {
+  if (!uploadFile) {
+    setBulkMsg("Please choose a file first.");
+    return;
+  }
+
+  setBulkMsg("Processing file...");
+
+  const reader = new FileReader();
+
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+
+      // Cleaning + mapping JSON
+      const cleanedJobs = json.map((item) => ({
+        title: item.title || item.Title,
+        description: item.description || item.Description,
+        eligibility: item.eligibility || item.Eligibility || "BOTH",
+        recruiterEmail: item.email || item.Email || null,
+        phone: item.phone || item.Phone || null,
+      }));
+
+      const res = await bulkCreateJobs(cleanedJobs);
+
+      if (res.success) {
+        setBulkMsg(
+          `Uploaded ${res.data.added.length} jobs. Failed: ${res.data.failed.length}`
+        );
+      } else {
+        setBulkMsg("Upload failed: " + res.error);
+      }
+    } catch (err) {
+      setBulkMsg("Error reading file.");
+    }
+  };
+
+  reader.readAsArrayBuffer(uploadFile);
+};
 
   // Create student
   const handleCreateStudent = async (e) => {
@@ -194,7 +271,8 @@ return (
       { label: "All Jobs", onClick: () => setActiveTab("JOBS") },
       { label: "Post New Job", onClick: () => setActiveTab("POST") },
       { label: "Create Student", onClick: () => setActiveTab("CREATE_STUDENT") },
-          { label: "Academy Student Records", onClick: () => setActiveTab("STUDENT_RECORDS") },
+          { label: "Referral Codes", onClick: () => setActiveTab("REFERRALS") }
+
     ]}
   >
     <div className="page">
@@ -222,6 +300,9 @@ return (
                       <h3 className="job-title">{job.title}</h3>
                       <p className="job-eligibility">{job.eligibility}</p>
                       <p className="job-desc">{job.description}</p>
+                      <p className="job-recruiter">Recruiter Email: {job.recruiterEmail}</p>
+                      <p className="job-recruiter-phone">Phone:{job.phone}</p>
+
                     </div>
 
                     <button
@@ -262,35 +343,83 @@ return (
       {/* =========================
           TAB 2 — POST JOB
       ========================== */}
-      {activeTab === "POST" && (
-        <main className="section">
-          <h1 className="text-3xl font-bold mb-6">Post New Job</h1>
+     {activeTab === "POST" && (
+  <main className="section">
+    <h1 className="text-3xl font-bold mb-6">Post New Job</h1>
 
-          <div className="form-card">
-            <form onSubmit={handleCreateJob} className="form-body">
+    <div className="form-card">
+      <form onSubmit={handleCreateJob} className="form-body">
 
-              <label>Job Title</label>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <label>Job Title</label>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} />
 
-              <label>Description</label>
-              <textarea
-                rows="4"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
+        <label>Description</label>
+        <textarea
+          rows="4"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
 
-              <label>Eligibility</label>
-              <select value={eligibility} onChange={(e) => setEligibility(e.target.value)}>
-                <option value="BOTH">Open to All</option>
-                <option value="MEDIBRIDGE_ONLY">Medibridge Only</option>
-                <option value="EXTERNAL_ONLY">External Only</option>
-              </select>
+        <label>Eligibility</label>
+        <select value={eligibility} onChange={(e) => setEligibility(e.target.value)}>
+          <option value="BOTH">Open to All</option>
+          <option value="MEDIBRIDGE_ONLY">Medibridge Only</option>
+          <option value="EXTERNAL_ONLY">External Only</option>
+        </select>
 
-              <button type="submit" className="save-btn">Post Job</button>
-            </form>
-          </div>
-        </main>
+        {/* NEW FIELD */}
+        <label>Recruiter Email</label>
+        <input
+          type="email"
+          value={recruiterEmail}
+          onChange={(e) => setRecruiterEmail(e.target.value)}
+          required
+          placeholder="example@company.com"
+        />
+  <label>Recruiter Phone (optional)</label>
+<input
+  value={phone}
+  onChange={(e) => setPhone(e.target.value)}
+  placeholder="Enter phone (optional)"
+/>
+
+        <button type="submit" className="save-btn">Post Job</button>
+      </form>
+    </div>
+        {/* -----------------------------
+         BULK UPLOAD SECTION
+    ------------------------------ */}
+    <div className="form-card mt-6">
+      <h2 className="text-xl font-bold mb-3">Bulk Upload Jobs (Excel / CSV)</h2>
+
+      <p className="text-sm text-gray-600 mb-3">
+        Upload an Excel/CSV file with columns:
+        <strong> title, description, eligibility, email, phone</strong>
+      </p>
+
+      <input
+        type="file"
+        accept=".xlsx, .xls, .csv"
+        onChange={(e) => setUploadFile(e.target.files[0])}
+        className="mb-3"
+      />
+
+      <button
+        type="button"
+        className="save-btn"
+        onClick={handleBulkUpload}
+      >
+        Upload Jobs in Bulk
+      </button>
+
+      {bulkMsg && (
+        <div className="msg-banner mt-4">{bulkMsg}</div>
       )}
+    </div>
+
+  </main>
+)}
+
 
       {/* =========================
           TAB 3 — CREATE STUDENT
@@ -328,6 +457,66 @@ return (
           </div>
         </main>
       )}
+      {activeTab === "REFERRALS" && (
+  <main className="section">
+    <h1 className="text-3xl font-bold mb-6">Referral Codes</h1>
+
+    {/* ADD CODES */}
+    <div className="form-card">
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const codesArray = newCodes.split(",").map(c => c.trim());
+          const res = await addReferralCodesAPI(codesArray);
+          if (res.success) {
+            setMsg("Referral Codes Added!");
+            setNewCodes("");
+            loadReferralCodes();
+          } else setMsg(res.error);
+        }}
+        className="form-body"
+      >
+        <label>Add Multiple Codes (comma separated)</label>
+        <input
+          value={newCodes}
+          onChange={(e) => setNewCodes(e.target.value)}
+          placeholder="MB2025A1, MB2025B2"
+        />
+
+        <button className="save-btn">Add Codes</button>
+      </form>
+    </div>
+
+    {/* LIST CODES */}
+    <div className="record-list">
+      {referralCodes.length === 0 ? (
+        <p>No referral codes found</p>
+      ) : (
+        referralCodes.map((ref) => (
+          <div key={ref.code} className="job-card">
+            <h3>{ref.code}</h3>
+           
+
+            <div className="record-actions">
+             
+
+              <button
+                className="delete-btn"
+                onClick={async () => {
+                  await deleteReferral(ref.code);
+                  loadReferralCodes();
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </main>
+)}
+
 {activeTab === "STUDENT_RECORDS" && (
   <main className="section">
     <h1 className="text-3xl font-bold mb-6">Academy Student Records</h1>

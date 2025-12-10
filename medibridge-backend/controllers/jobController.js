@@ -5,29 +5,52 @@ import StudentProfile from "../models/StudentProfile.js";   // ← THIS LINE WAS
 // POST /api/faculty/jobs → Create job (FACULTY only)
 export const createJob = async (req, res) => {
   try {
-    const { title, description, eligibility } = req.body;
+    const { title, description, eligibility, recruiterEmail, phone } = req.body;
 
     if (!title || !description || !eligibility) {
-      return res.status(400).json({ message: "Title, description, and eligibility are required." });
+      return res.status(400).json({
+        message: "Title, description and eligibility are required.",
+      });
     }
 
-    if (!["MEDIBRIDGE_ONLY", "EXTERNAL_ONLY", "BOTH"].includes(eligibility)) {
-      return res.status(400).json({ message: "Invalid eligibility value." });
+    // ❗ ENSURE AT LEAST ONE CONTACT
+    if (!recruiterEmail && !phone) {
+      return res.status(400).json({
+        message: "Provide at least one contact: recruiter email or phone number.",
+      });
+    }
+
+    // Validate email only if present
+    if (recruiterEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(recruiterEmail)) {
+        return res.status(400).json({ message: "Invalid recruiter email format." });
+      }
+    }
+
+    // Validate phone only if present (simple numeric check)
+    if (phone && !/^[0-9]{7,15}$/.test(phone)) {
+      return res.status(400).json({ message: "Invalid phone number format." });
     }
 
     const job = await Job.create({
       title,
       description,
       eligibility,
+      recruiterEmail: recruiterEmail || null,
+      phone: phone || null,
       postedBy: req.user.id,
     });
 
     res.status(201).json(job);
+
   } catch (err) {
     console.error("Create job error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
 export const getJobsForStudentOrExternal = async (req, res) => {
   try {
     let filter = {};
@@ -44,9 +67,9 @@ export const getJobsForStudentOrExternal = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized role" });
     }
 
-    const jobs = await Job.find(filter)
-      .populate("postedBy", "name email")
-      .sort({ createdAt: -1 });
+   const jobs = await Job.find(filter)
+  .populate("postedBy", "name email")
+  .sort({ createdAt: -1 });
 
     return res.json(jobs);
 
@@ -105,6 +128,7 @@ export const applyToJob = async (req, res) => {
           missing: incomplete,
         });
       }
+      
     }
 
     // Check eligibility
@@ -121,8 +145,13 @@ export const applyToJob = async (req, res) => {
 
     // Prevent duplicate applications
     const existing = await Application.findOne({ job: jobId, user: userId });
-    if (existing)
-      return res.status(400).json({ message: "Already applied to this job" });
+    if (existing) {
+  return res.json({
+    success: true,
+    alreadyApplied: true,
+    message: "Application already exists"
+  });
+}
 
     // Create application
     const application = await Application.create({
@@ -170,22 +199,31 @@ export const updateJob = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-const job = await Job.findById(id);
+    const job = await Job.findById(id);
     if (!job) return res.status(404).json({ message: "Job not found or not yours" });
 
-    // Only allow these fields to be updated
-    const allowedUpdates = ["title", "description", "eligibility"];
+    const allowedUpdates = ["title", "description", "eligibility", "recruiterEmail"];
+
     Object.keys(updates).forEach((key) => {
       if (allowedUpdates.includes(key)) job[key] = updates[key];
     });
 
+    // If recruiterEmail is updated → validate
+    if (updates.recruiterEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(updates.recruiterEmail)) {
+        return res.status(400).json({ message: "Invalid recruiter email format." });
+      }
+    }
+
     await job.save();
     res.json(job);
   } catch (err) {
-    console.error(err);
+    console.error("Update job error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // DELETE JOB (also deletes all applications)
 export const deleteJob = async (req, res) => {
@@ -234,6 +272,84 @@ export const updateApplicationStatus = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+export const bulkCreateJobs = async (req, res) => {
+  try {
+    const jobsArray = req.body.jobs;
+
+    if (!Array.isArray(jobsArray) || jobsArray.length === 0) {
+      return res.status(400).json({
+        message: "Jobs must be a non-empty array."
+      });
+    }
+
+    const results = {
+      added: [],
+      failed: []
+    };
+
+    for (const job of jobsArray) {
+      const { title, description, eligibility, recruiterEmail, phone } = job;
+
+      // Basic required fields
+      if (!title || !description || !eligibility) {
+        results.failed.push({
+          job,
+          reason: "Missing required fields: title, description, eligibility"
+        });
+        continue;
+      }
+
+      // At least one contact method
+      if (!recruiterEmail && !phone) {
+        results.failed.push({
+          job,
+          reason: "Either recruiterEmail or phone is required"
+        });
+        continue;
+      }
+
+      // Email validation (only if provided)
+      if (recruiterEmail) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(recruiterEmail)) {
+          results.failed.push({
+            job,
+            reason: "Invalid recruiter email format"
+          });
+          continue;
+        }
+      }
+
+      try {
+        // Create job
+        const newJob = await Job.create({
+          title,
+          description,
+          eligibility,
+          recruiterEmail: recruiterEmail || null,
+          phone: phone || null,
+          postedBy: req.user.id
+        });
+
+        results.added.push(newJob);
+      } catch (err) {
+        results.failed.push({
+          job,
+          reason: err.message
+        });
+      }
+    }
+
+    return res.status(201).json({
+      message: "Bulk job processing complete.",
+      results
+    });
+
+  } catch (err) {
+    console.error("Bulk job error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

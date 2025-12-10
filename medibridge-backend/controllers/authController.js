@@ -1,7 +1,21 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import AcademyStudent from "../models/AcademyStudent.js";
+import ReferralCode from "../models/ReferralCode.js";
+
+import Otp from "../models/Otp.js"; 
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+dotenv.config();
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 const createToken = (user) => {
   return jwt.sign(
@@ -14,56 +28,50 @@ const createToken = (user) => {
 // POST /api/auth/register
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role, admissionNo } = req.body;
+    const { name, email, password, role, referralCode } = req.body;
 
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ message: "All fields are required." });
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required." });
     }
 
-    // Prevent duplicate email
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ message: "Email already registered." });
     }
 
-    /* =======================================================
-       IF ROLE = STUDENT → it means ACADEMY student
-       Validate admission number against AcademyStudents DB
-    ======================================================= */
-    if (role === "STUDENT") {
-      if (!admissionNo) {
-        return res.status(400).json({
-          message: "Admission number is required for academy students",
-        });
-      }
+    /* ================================
+   REFERRAL CODE VALIDATION
+   AUTO-ASSIGN STUDENT ROLE
+================================ */
+let finalRole = "EXTERNAL"; // always default
 
-      // Search in whitelist collection
-      const academyRecord = await AcademyStudent.findOne({ admissionNo });
+if (referralCode) {
+  const referralRecord = await ReferralCode.findOne({ code: referralCode });
 
-      if (!academyRecord) {
-        return res.status(400).json({
-          message: "Invalid admission number. Not found in academy records.",
-        });
-      }
+  if (!referralRecord || !referralRecord.valid) {
+    return res.status(400).json({
+      message: "Invalid referral code.",
+    });
+  }
 
-      // Optional: name matching for safety
-      if (academyRecord.name.toLowerCase() !== name.toLowerCase()) {
-        return res.status(400).json({
-          message: "Admission number does not match the student name.",
-        });
-      }
-    }
+  finalRole = "STUDENT";
+
+  // Optional: make code single-use
+  // referralRecord.valid = false;
+  // await referralRecord.save();
+}
+
 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user with or without admissionNo
+    // Create user
     const user = await User.create({
       name,
       email,
       password: passwordHash,
-      role,
-      admissionNo: role === "STUDENT" ? admissionNo : null,
+      role: finalRole,
+      referralCode: referralCode || null,
     });
 
     const token = createToken(user);
@@ -83,6 +91,7 @@ export const register = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const login = async (req, res) => {
   try {
@@ -173,6 +182,99 @@ export const createMedibridgeStudentByFaculty = async (req, res) => {
     });
   } catch (err) {
     console.error("Faculty create student error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+// SEND PASSWORD RESET OTP
+export const forgotPasswordSendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email)
+      return res.status(400).json({ message: "Email is required." });
+
+    // Ensure user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "No account found with this email.",
+      });
+    }
+
+    // Generate OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    // Save OTP to DB
+    await Otp.create({
+      email,
+      code: otp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    // Send Email
+    await transporter.sendMail({
+      from: `"Medibridge Portal" <${process.env.EMAIL}>`,
+      to: email,
+      subject: "Password Reset OTP",
+      text: `Your OTP is ${otp}. It expires in 5 minutes.`,
+    });
+
+    res.json({ success: true, message: "Password reset OTP sent" });
+
+  } catch (err) {
+    console.error("Forgot Password OTP Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+export const forgotPasswordVerifyOtp = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code)
+      return res.status(400).json({ message: "Email and OTP required" });
+
+    const otpEntry = await Otp.findOne({ email }).sort({ createdAt: -1 });
+
+    if (!otpEntry)
+      return res.status(400).json({ message: "OTP not found" });
+
+    if (otpEntry.code !== code)
+      return res.status(400).json({ message: "Incorrect OTP" });
+
+    if (otpEntry.expiresAt < new Date())
+      return res.status(400).json({ message: "OTP expired" });
+
+    res.json({ success: true, message: "OTP verified" });
+
+  } catch (err) {
+    console.error("Forgot Password Verify Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword)
+      return res.status(400).json({ message: "Email and new password are required." });
+
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(400).json({ message: "User not found" });
+
+    const hash = await bcrypt.hash(newPassword, 10);
+
+    user.password = hash;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successfully. Please log in.",
+    });
+
+  } catch (err) {
+    console.error("Reset Password Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -66,7 +66,7 @@ const Login = () => {
             <input
               className="auth-input"
               type="email"
-              placeholder="you@medibridge.com"
+              placeholder="you@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -119,6 +119,11 @@ const Login = () => {
             Create an account
           </span>
         </p>
+<p className="auth-footer">
+  <span className="auth-link" onClick={() => navigate("/reset-password")}>
+    Forgot Password?
+  </span>
+</p>
 
         
       </div>

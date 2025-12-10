@@ -1,25 +1,24 @@
 // src/pages/Signup.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./styles/Login.css";
 import { register, sendOtp, verifyOtp } from "../api/api";
 
 const Signup = () => {
   const navigate = useNavigate();
-useEffect(() => {
-  if (successMsg) {
-    setTimeout(() => {
-      navigate("/login");
-    }, 1500); // 1.5s delay
-  }
-}, [successMsg]);
-  // NEW: Student type selector
-  const [studentType, setStudentType] = useState("ACADEMY"); 
-  // ACADEMY or EXTERNAL
+
+  // STATE
+  const [referralCode, setReferralCode] = useState("");
+  const [showReferralInfo, setShowReferralInfo] = useState(false);
+
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [admissionNo, setAdmissionNo] = useState("");
 
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -30,146 +29,173 @@ useEffect(() => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [otpSuccessEffect, setOtpSuccessEffect] = useState(false);
+  const [signupSuccessEffect, setSignupSuccessEffect] = useState(false);
 
-  /*====================================================
-    SEND OTP
-  ====================================================*/
+  // SEND OTP
   const handleSendOtp = async () => {
     setErrorMsg("");
     setSuccessMsg("");
+    setSendingOtp(true);
 
-    if (!email) return setErrorMsg("Please enter email first");
+    if (!email) {
+      setSendingOtp(false);
+      return setErrorMsg("Please enter email first.");
+    }
 
     const res = await sendOtp(email);
-    if (!res.success) return setErrorMsg(res.error || "Failed to send OTP");
+    if (!res.success) {
+      setSendingOtp(false);
+      return setErrorMsg(res.error || "Failed to send OTP.");
+    }
 
     setOtpSent(true);
     setSuccessMsg("OTP sent to your email!");
+    setSendingOtp(false);
   };
 
-  /*====================================================
-    VERIFY OTP
-  ====================================================*/
+  // VERIFY OTP
   const handleVerifyOtp = async () => {
     setErrorMsg("");
     setSuccessMsg("");
+    setVerifyingOtp(true);
 
-    if (!otp) return setErrorMsg("Enter the OTP you received");
+    if (!otp) {
+      setVerifyingOtp(false);
+      return setErrorMsg("Enter the OTP you received.");
+    }
 
     const res = await verifyOtp(email, otp);
-    if (!res.success) return setErrorMsg(res.error || "Incorrect OTP");
+
+    if (!res.success) {
+      setVerifyingOtp(false);
+      return setErrorMsg(res.error || "Incorrect OTP.");
+    }
+
+    setOtpSuccessEffect(true);
+    setTimeout(() => setOtpSuccessEffect(false), 1000);
 
     setOtpVerified(true);
-    setSuccessMsg("OTP verified! You can now create your account.");
+    setSuccessMsg("OTP verified successfully!");
+    setVerifyingOtp(false);
   };
 
-  /*====================================================
-    CREATE ACCOUNT
-  ====================================================*/
+  // FINAL SIGNUP
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setErrorMsg("");
+  setSuccessMsg("");
 
-    setErrorMsg("");
+  if (!otpVerified) {
+    setErrorMsg("Please verify OTP first.");
+    setTimeout(() => setErrorMsg(""), 3000);
+    return;
+  }
 
-    if (!otpVerified) {
-      return setErrorMsg("Please verify OTP first.");
-    }
-
-    // Determine backend role
-    const role = studentType === "ACADEMY" ? "STUDENT" : "EXTERNAL";
-
-    // Validate admission number only for academy
-    if (studentType === "ACADEMY" && !admissionNo) {
-      return setErrorMsg("Admission number is required for academy students.");
-    }
+  if (!acceptedTerms) {
+    setErrorMsg("You must accept Terms & Conditions.");
+    setTimeout(() => setErrorMsg(""), 3000);
+    return;
+  }
 
     setLoading(true);
 
-    try {
-      const body = {
-        name,
-        email,
-        password,
-        role,
-        admissionNo: studentType === "ACADEMY" ? admissionNo : null,
-      };
+    const body = {
+      name,
+      email,
+      password,
+      role: "EXTERNAL",
+      referralCode: referralCode || null,
+    };
 
-      const { success, data, error } = await register(body);
+    const { success, data, error } = await register(body);
 
-      if (!success) {
-  console.log("Signup error:", error);  // DEBUG — shows exactly what you're receiving
-  return setErrorMsg(error);
-}
-
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      navigate("/");
-    } catch (err) {
-      setErrorMsg("Network error. Try again.");
-    } finally {
+    if (!success) {
       setLoading(false);
+      return setErrorMsg(error);
     }
+
+    setSignupSuccessEffect(true);
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    setTimeout(() => navigate("/login"), 600);
   };
 
   return (
     <div className="auth-page">
+      {/* TERMS & CONDITIONS POPUP */}
+      {showTermsModal && (
+        <div className="terms-overlay">
+          <div className="terms-box">
+            <h2>Medibridge — Terms & Conditions</h2>
+
+            <p>1. Information provided must be accurate and truthful.</p>
+            <p>2. Your CV & profile may be shared with verified recruiters.</p>
+            <p>3. Medibridge does not guarantee interviews or job placements.</p>
+            <p>4. Medibridge is not responsible for employer behaviour or disputes.</p>
+            <p>5. Users must not upload fake data, spam, or misuse the platform.</p>
+            <p>6. All platform content belongs to Medibridge.</p>
+            <p>7. Legal jurisdiction: Kerala, India.</p>
+
+            <button className="terms-close" onClick={() => setShowTermsModal(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* REFERRAL INFO POPUP */}
+      {showReferralInfo && (
+        <div className="terms-overlay">
+          <div className="terms-box">
+            <h2>What is a Referral Code?</h2>
+            <p>
+              Referral codes are awarded by Medibridge to candidates based on:
+            </p>
+            <p>• Performance in Medibridge talent assessments</p>
+            <p>• Behaviour, professionalism & community participation</p>
+            <p>• Special events, workshops & merit-based recognitions</p>
+
+            <p>
+              These codes help job seekers stand out and may unlock exclusive
+              opportunities.
+            </p>
+
+            <button className="terms-close" onClick={() => setShowReferralInfo(false)}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SIGNUP CARD */}
       <div className="auth-card">
         <h2 className="auth-title">Create Your Account</h2>
         <p className="auth-sub">Join Medibridge today</p>
 
         <form onSubmit={handleSubmit}>
-          {/* SELECT STUDENT TYPE */}
-          <div className="auth-group">
-            <label className="auth-label">I am a:</label>
-            <select
-              className="auth-input"
-              value={studentType}
-              onChange={(e) => setStudentType(e.target.value)}
-            >
-              <option value="ACADEMY">FutureAce Academy Student</option>
-              <option value="EXTERNAL">External Student</option>
-            </select>
-          </div>
-
           {/* NAME */}
           <div className="auth-group">
-            <label className="auth-label">Full Name</label>
+            <label className="auth-label">Full Name *</label>
             <input
               className="auth-input"
-              type="text"
-              placeholder="John Doe"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
           </div>
 
-          {/* ACADEMY STUDENTS → ADMISSION NO */}
-          {studentType === "ACADEMY" && (
-            <div className="auth-group">
-              <label className="auth-label">Admission Number</label>
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="e.g. FA-2024-00123"
-                value={admissionNo}
-                onChange={(e) => setAdmissionNo(e.target.value)}
-                required
-              />
-            </div>
-          )}
-
-          {/* EMAIL + OTP BUTTON */}
+          {/* EMAIL + OTP */}
           <div className="auth-group">
-            <label className="auth-label">Email</label>
+            <label className="auth-label">Email *</label>
             <div className="otp-row">
               <input
                 className="auth-input"
                 type="email"
-                placeholder="you@example.com"
                 value={email}
+                disabled={otpSent && !otpVerified}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setOtpSent(false);
@@ -177,74 +203,119 @@ useEffect(() => {
                 }}
                 required
               />
-              <button type="button" className="otp-btn" onClick={handleSendOtp}>
-                {otpSent ? "Resend" : "Send OTP"}
+              <br/> <br/>
+                <button type="button" className="otp-btn" onClick={handleSendOtp}>
+                {sendingOtp ? <span className="loading-spinner" /> : otpSent ? "Resend" : "Send OTP"}
               </button>
             </div>
           </div>
 
-          {/* OTP FIELD */}
+          {/* OTP INPUT */}
           {otpSent && (
             <div className="auth-group">
-              <label className="auth-label">Enter OTP</label>
+              <label className="auth-label">Enter OTP *</label>
               <div className="otp-row">
                 <input
-                  className="auth-input"
-                  type="text"
-                  placeholder="123456"
+                  className={`auth-input ${otpSuccessEffect ? "success-glow" : ""}`}
+                  disabled={otpVerified}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                 />
-                <button
-                  type="button"
-                  className="otp-btn"
-                  onClick={handleVerifyOtp}
-                >
-                  Verify
+                <br/> <br/>
+                <button type="button" className="otp-btn" onClick={handleVerifyOtp}>
+                  {verifyingOtp ? <span className="loading-spinner" /> : "Verify"}
                 </button>
               </div>
             </div>
           )}
 
-          {/* PASSWORD */}
+          {/* REFERRAL CODE + TOOLTIP */}
           <div className="auth-group">
-            <label className="auth-label">Password</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <label className="auth-label">Referral Code</label>
+              <span
+                style={{
+                  background: "#2563eb",
+                  color: "white",
+                  borderRadius: "50%",
+                  width: "18px",
+                  height: "18px",
+                  fontSize: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+                onClick={() => setShowReferralInfo(true)}
+              >
+              {" "}
+  !
+              </span>
+            </div>
+<br/> 
             <input
               className="auth-input"
-              type="password"
-              placeholder="Create a strong password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength="6"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value)}
             />
           </div>
 
-          {/* FEEDBACK MESSAGES */}
-          {successMsg && <p className="auth-success">{successMsg} </p>}
+          {/* PASSWORD */}
+          <div className="auth-group">
+            <label className="auth-label">Password *</label>
+            <input
+              className="auth-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
+          {/* TERMS CHECKBOX */}
+          <div className="auth-group" style={{ marginTop: "15px" }}>
+            <label className="auth-checkbox">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+              />
+              <span>
+              {" "}
+  I agree to the{" "}
+                <span
+                  className="auth-link"
+                  onClick={() => setShowTermsModal(true)}
+                >
+                  Terms & Conditions
+                </span>
+              </span>
+            </label>
+          </div>
+
+          {/* ERROR */}
+         {/* ERROR */}
+{/* ERROR */}
 {errorMsg && (
-  <div style={{
-    background: "#ffdddd",
-    padding: "12px",
-    color: "#b30000",
-    borderRadius: "6px",
-    marginTop: "10px",
-    fontSize: "15px",
-    fontWeight: "500",
-    border: "1px solid #ffb3b3"
-  }}>
+  <div className="error-box">
     {errorMsg}
   </div>
 )}
 
-          {/* REGISTER BUTTON */}
+{/* SUCCESS */}
+{successMsg && (
+  <div className="success-box">
+    {successMsg}
+  </div>
+)}
+
+          {/* SUBMIT */}
           <button
-            className="auth-btn"
+            className={`auth-btn ${signupSuccessEffect ? "success-glow" : ""}`}
             type="submit"
-            disabled={loading || !otpVerified}
+           disabled={loading} 
           >
-            {loading ? "Creating Account..." : "Sign Up"}
+            {loading ? <span className="loading-spinner" /> : "Sign Up"}
           </button>
         </form>
 

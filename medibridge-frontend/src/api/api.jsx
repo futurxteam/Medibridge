@@ -118,8 +118,14 @@ export const createJob = async (jobData) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(jobData),
   });
-  const data = res.ok ? await handleResponse(res) : null;
-  return { success: res.ok, data, error: res.ok ? null : (await res.json()).message };
+
+  const json = await res.json(); // parse ONCE
+
+  return {
+    success: res.ok,
+    data: res.ok ? json : null,
+    error: res.ok ? null : json.message
+  };
 };
 
 export const getFacultyJobs = async () => {
@@ -152,8 +158,16 @@ export const updateJob = async (jobId, updates) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(updates),
   });
-  return handleResponse(res);
+
+  const json = await res.json();
+
+  return {
+    success: res.ok,
+    data: res.ok ? json : null,
+    error: res.ok ? null : json.message
+  };
 };
+
 
 export const deleteJob = async (jobId) => {
   const res = await fetch(`${API_BASE}/api/faculty/jobs/${jobId}`, {
@@ -192,7 +206,7 @@ export const sendOtp = async (email) => {
   try {
     const res = await fetch(`${API_BASE}/api/otp/send`, {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
 
@@ -203,6 +217,7 @@ export const sendOtp = async (email) => {
   }
 };
 
+
 /* -------------------------------
    VERIFY OTP
 -------------------------------- */
@@ -210,7 +225,7 @@ export const verifyOtp = async (email, code) => {
   try {
     const res = await fetch(`${API_BASE}/api/otp/verify`, {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, code }),
     });
 
@@ -220,6 +235,7 @@ export const verifyOtp = async (email, code) => {
     return { success: false, error: err.message };
   }
 };
+
 
 /* -----------------------------
    ACADEMIC RECORD CRUD (FACULTY)
@@ -267,4 +283,111 @@ export const deleteRecord = async (id) => {
   });
   const data = await res.json();
   return { success: res.ok, data };
+};
+/* -------------------------------
+   FORGOT PASSWORD FLOW
+-------------------------------- */
+
+// 1. Send OTP
+export const forgotPasswordSendOtp = async (email) => {
+  const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await res.json();
+  return { success: res.ok, data, error: !res.ok ? data.message : null };
+};
+
+// 2. Verify OTP
+export const forgotPasswordVerifyOtp = async (email, code) => {
+  const res = await fetch(`${API_BASE}/api/auth/forgot-password/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+
+  const data = await res.json();
+  return { success: res.ok, data, error: !res.ok ? data.message : null };
+};
+
+// 3. Reset Password
+export const resetPassword = async (email, newPassword) => {
+  const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, newPassword }),
+  });
+
+  const data = await res.json();
+  return { success: res.ok, data, error: !res.ok ? data.message : null };
+};
+
+/* -------------------------------
+   REFERRAL CODE MANAGEMENT
+-------------------------------- */
+
+export const addReferralCodesAPI = async (codes) => {
+  const res = await fetch(`${API_BASE}/api/faculty/referral/add`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ codes }),
+  });
+
+  const data = await res.json();
+  return { success: res.ok, data, error: data.message };
+};
+
+export const getReferralList = async () => {
+  const res = await fetch(`${API_BASE}/api/faculty/referral/all`, {
+    headers: getAuthHeaders(),
+  });
+
+  const data = await res.json();
+  return { success: res.ok, data };
+};
+
+export const deleteReferral = async (code) => {
+  const res = await fetch(`${API_BASE}/api/faculty/referral/${code}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  const data = await res.json();
+  return { success: res.ok, data, error: data.message };
+};
+
+export const toggleReferral = async (code) => {
+  const res = await fetch(`${API_BASE}/api/faculty/referral/${code}/toggle`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+  });
+
+  const data = await res.json();
+  return { success: res.ok, data, error: data.message };
+};
+// BULK JOB POST
+export const bulkCreateJobs = async (jobs) => {
+  try {
+    const res = await fetch(`${API_BASE}/faculty/jobs/bulk`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({ jobs })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return { success: false, error: data.message };
+    }
+
+    return { success: true, data: data.results };
+
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 };

@@ -66,10 +66,47 @@
 }
 
 /* actual image logo used in Home.jsx */
+/* BIGGER LOGO – works great on mobile + desktop */
 .nav-logo {
-  height: 40px;
-  width: 100px;
+  height: auto;
+  width: auto;
+  max-height: 88px;     /* increased from 60px → much more prominent */
+  max-width: 380px;     /* increased from 290px */
   display: block;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+/* Desktop / Large screens */
+@media (min-width: 900px) {
+  .nav-logo {
+    max-height: 115px;   /* even bigger on large screens */
+    max-width: 460px;
+  }
+}
+
+/* Tablet */
+@media (min-width: 640px) and (max-width: 899px) {
+  .nav-logo {
+    max-height: 100px;
+    max-width: 420px;
+  }
+}
+
+/* Mobile – still significantly bigger than before */
+@media (max-width: 639px) {
+  .nav-logo {
+    max-height: 78px;    /* was 48px → now 78px (62% larger) */
+    max-width: 320px;    /* was 180px → now 320px */
+  }
+}
+
+/* Extra small phones – prevent overflow */
+@media (max-width: 380px) {
+  .nav-logo {
+    max-height: 68px;
+    max-width: 280px;
+  }
 }
 
 .nav-links {
